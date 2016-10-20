@@ -10,6 +10,7 @@ import android.widget.Toast;
 public class CommonMethods {
 
     public final static String EXTRA_MESSAGE = "com.teamalpha.herenthere.MESSAGE";
+    private static final String TAG = "CommonMethods";
 
     public static void showToastMessage(Context context,String msg) {
         int duration = Toast.LENGTH_SHORT;

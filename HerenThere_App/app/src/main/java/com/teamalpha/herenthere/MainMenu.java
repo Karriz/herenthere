@@ -12,14 +12,17 @@ import android.widget.Toast;
 import com.teamalpha.herenthere.CommonMethods;
 
 public class MainMenu extends AppCompatActivity {
-    EditText nameEdit;
+
+    private static final String TAG = "MainMenu";
+    private EditText nameEdit;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
         nameEdit = (EditText)findViewById(R.id.name_field);
 
-        Log.d("ONCREATE", "Main Menu");
+        Log.d(TAG, "OnCreate called");
 
     }
 
@@ -27,7 +30,7 @@ public class MainMenu extends AppCompatActivity {
     public void playClicked(View view) {
         String name = nameEdit.getText().toString();
         if (!name.equals("")) {
-            Log.d("PLAY CLICKED", "Player name is "+name);
+            Log.d(TAG, "Player name is "+name);
             //Load the game scene
 
             Intent intent = new Intent(this, GameActivity.class);
@@ -36,7 +39,7 @@ public class MainMenu extends AppCompatActivity {
 
         }
         else {
-            Log.d("PLAY CLICKED", "No name given!");
+            Log.d(TAG, "No name given!");
             CommonMethods.showToastMessage(this,"Please enter player name");
         }
     }
