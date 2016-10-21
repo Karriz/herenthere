@@ -24,6 +24,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -36,6 +37,7 @@ public class GameActivity extends FragmentActivity implements
         GoogleApiClient.OnConnectionFailedListener,
         GoogleMap.OnMarkerDragListener,
         GoogleMap.OnMapLongClickListener,
+        GoogleMap.OnMapClickListener,
         View.OnClickListener,
         LocationListener{
 
@@ -91,12 +93,18 @@ public class GameActivity extends FragmentActivity implements
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setOnMapClickListener(this);
         mMap.setMyLocationEnabled(true);
+        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
-        /*// Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
+        mMap.setMinZoomPreference(14.0f);
+        mMap.setMaxZoomPreference(21.0f);
+
+        mMap.setLatLngBoundsForCameraTarget(new LatLngBounds(new LatLng(65.008692, 25.451551),new LatLng(65.016454, 25.484114)));
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(65.016667,25.466667)));
+
+
 
         if ( Build.VERSION.SDK_INT >= 23 &&
                 ContextCompat.checkSelfPermission( this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED &&
@@ -178,7 +186,9 @@ public class GameActivity extends FragmentActivity implements
     }
 
     public void onLocationChanged(Location location) {
-        moveMap(new LatLng(location.getLatitude(),location.getLongitude()));
+        //moveMap(new LatLng(location.getLatitude(),location.getLongitude()));
+
+        Log.d(TAG,"Location changed: "+location.getLatitude()+", "+location.getLongitude());
     }
 
     @Override
@@ -194,5 +204,10 @@ public class GameActivity extends FragmentActivity implements
     @Override
     public void onProviderDisabled(String provider) {
 
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+        addMarker(latLng);
     }
 }
