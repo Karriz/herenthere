@@ -7,11 +7,9 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 
@@ -23,13 +21,15 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
-import com.teamalpha.herenthere.CommonMethods;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GameActivity extends FragmentActivity implements
         OnMapReadyCallback,
@@ -45,6 +45,9 @@ public class GameActivity extends FragmentActivity implements
 
     private GoogleMap mMap;
     private GoogleApiClient googleApiClient;
+
+    private Location playerLocation;
+    private List<Marker> playerMarkers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +69,9 @@ public class GameActivity extends FragmentActivity implements
                 .addApi(LocationServices.API)
                 .build();
 
+        playerMarkers = new ArrayList<Marker>();
+
+        new JsonTask().execute("https://www.google.fi");
     }
 
     @Override
@@ -84,7 +90,7 @@ public class GameActivity extends FragmentActivity implements
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
+     * This is where we can add playerMarkers or lines, add listeners or move the camera. In this case,
      * we just add a marker near Sydney, Australia.
      * If Google Play services is not installed on the device, the user will be prompted to install
      * it inside the SupportMapFragment. This method will only be triggered once the user has
@@ -102,9 +108,22 @@ public class GameActivity extends FragmentActivity implements
 
         mMap.setLatLngBoundsForCameraTarget(new LatLngBounds(new LatLng(65.008692, 25.451551),new LatLng(65.016454, 25.484114)));
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(65.016667,25.466667)));
+        UiSettings uiSettings = mMap.getUiSettings();
+        uiSettings.setTiltGesturesEnabled(false);
+        uiSettings.setRotateGesturesEnabled(false);
+        uiSettings.setCompassEnabled(false);
 
+        mMap.setOnMarkerClickListener( new GoogleMap.OnMarkerClickListener()
+        {
+            @Override
+            public boolean onMarkerClick ( Marker marker )
+            {
+                // do nothing
+                return true;
+            }
+        });
 
+        moveMap(new LatLng(65.016667,25.466667));
 
         if ( Build.VERSION.SDK_INT >= 23 &&
                 ContextCompat.checkSelfPermission( this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED &&
@@ -133,16 +152,27 @@ public class GameActivity extends FragmentActivity implements
             //Moving the camera
             mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
 
-            //Animating the camera
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
+            //Setting zoom to 18
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(18));
         }
     }
 
     //Function to add a marker on the map
-    private void addMarker(LatLng latlng) {
+    private Marker addMarker(LatLng latlng) {
         //Adding marker to map
-        mMap.addMarker(new MarkerOptions()
+        Marker newMarker = mMap.addMarker(new MarkerOptions()
                 .position(latlng)); //setting position
+
+        playerMarkers.add(newMarker);
+        return newMarker;
+    }
+
+    //Function to remove all playerMarkers
+    private void removeMarkers() {
+        for (int i=playerMarkers.size()-1; i>=0; i--) {
+            playerMarkers.get(i).remove();
+            playerMarkers.remove(i);
+        }
     }
 
     @Override
@@ -188,6 +218,7 @@ public class GameActivity extends FragmentActivity implements
     public void onLocationChanged(Location location) {
         //moveMap(new LatLng(location.getLatitude(),location.getLongitude()));
 
+        playerLocation = location;
         Log.d(TAG,"Location changed: "+location.getLatitude()+", "+location.getLongitude());
     }
 
@@ -208,6 +239,7 @@ public class GameActivity extends FragmentActivity implements
 
     @Override
     public void onMapClick(LatLng latLng) {
+        Log.d(TAG,"Map was clicked at position: "+latLng.latitude+" ,"+latLng.longitude);
         addMarker(latLng);
     }
 }
