@@ -10,7 +10,7 @@ namespace HereAndThere.Controllers
     {
         public ActionResult Index()
         {
-            ViewBag.Title = "Home Page";
+            ViewBag.Title = "HearNThere";
 
             return View();
         }
