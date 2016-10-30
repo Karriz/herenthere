@@ -28,6 +28,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,7 +72,21 @@ public class GameActivity extends FragmentActivity implements
 
         playerMarkers = new ArrayList<Marker>();
 
-        new JsonTask().execute("https://www.google.fi");
+        HTTPGetTask httpGetTask = new HTTPGetTask();
+
+        try {
+            httpGetTask.run("http://192.168.11.12:8000", this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        HTTPPostTask httpPostTask = new HTTPPostTask();
+
+        try {
+            httpPostTask.post("http://192.168.11.12:8000", "body", this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -241,5 +256,15 @@ public class GameActivity extends FragmentActivity implements
     public void onMapClick(LatLng latLng) {
         Log.d(TAG,"Map was clicked at position: "+latLng.latitude+" ,"+latLng.longitude);
         addMarker(latLng);
+    }
+
+    public void testCallBack(final String msg) {
+        final GameActivity context = this;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                CommonMethods.showToastMessage(context,msg);
+            }
+        });
     }
 }
