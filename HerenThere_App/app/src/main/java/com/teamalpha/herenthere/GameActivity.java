@@ -1,5 +1,6 @@
 package com.teamalpha.herenthere;
 
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -7,6 +8,7 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -15,7 +17,10 @@ import android.view.View;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+
 import android.location.LocationListener;
+
+import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -28,6 +33,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,12 +45,13 @@ public class GameActivity extends FragmentActivity implements
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMapClickListener,
         View.OnClickListener,
-        LocationListener{
+        LocationListener {
 
     private static final String TAG = "GameActivity";
 
     private GoogleMap mMap;
     private GoogleApiClient googleApiClient;
+    private LocationManager locationManager;
 
     private Location playerLocation;
     private List<Marker> playerMarkers;
@@ -60,29 +67,68 @@ public class GameActivity extends FragmentActivity implements
 
         Intent intent = getIntent();
         String name = intent.getStringExtra(CommonMethods.EXTRA_MESSAGE);
-        CommonMethods.showToastMessage(this,"Welcome, player "+name);
+        CommonMethods.showToastMessage(this, "Welcome, player " + name);
 
         //Initializing googleapi client
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
+                .addApi(ActivityRecognition.API)
                 .build();
 
         playerMarkers = new ArrayList<Marker>();
 
-        new JsonTask().execute("https://www.google.fi");
+        HTTPGetTask httpGetTask = new HTTPGetTask();
+
+        try {
+            httpGetTask.run("https://www.google.fi", this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        HTTPPostTask httpPostTask = new HTTPPostTask();
+
+        try {
+            httpPostTask.post("https://www.google.fi", "body", this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     protected void onStart() {
         googleApiClient.connect();
+
+        if (Build.VERSION.SDK_INT >= 23 &&
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            Log.e(TAG, "No location permission");
+        } else {
+            // Acquire a reference to the system Location Manager
+            locationManager = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
+
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100, 1, this);
+        }
+
         super.onStart();
     }
 
     @Override
     protected void onStop() {
         googleApiClient.disconnect();
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        locationManager.removeUpdates(this);
         super.onStop();
     }
 
@@ -100,6 +146,17 @@ public class GameActivity extends FragmentActivity implements
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setOnMapClickListener(this);
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         mMap.setMyLocationEnabled(true);
         mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
@@ -124,19 +181,6 @@ public class GameActivity extends FragmentActivity implements
         });
 
         moveMap(new LatLng(65.016667,25.466667));
-
-        if ( Build.VERSION.SDK_INT >= 23 &&
-                ContextCompat.checkSelfPermission( this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission( this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            Log.e(TAG, "No location permission");
-        }
-        else {
-            // Acquire a reference to the system Location Manager
-            LocationManager locationManager = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
-
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100, 1, this);
-        }
 
     }
 
@@ -182,7 +226,14 @@ public class GameActivity extends FragmentActivity implements
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        Log.d(TAG,"onConnected called");
+        Intent intent = new Intent(this, ActivityRecognitionIntentService.class);
+        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
+                googleApiClient,
+                1000 /* detection interval */,
+                pendingIntent);
     }
 
     @Override
@@ -241,5 +292,15 @@ public class GameActivity extends FragmentActivity implements
     public void onMapClick(LatLng latLng) {
         Log.d(TAG,"Map was clicked at position: "+latLng.latitude+" ,"+latLng.longitude);
         addMarker(latLng);
+    }
+
+    public void testCallBack(final String msg) {
+        final GameActivity context = this;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                CommonMethods.showToastMessage(context,msg);
+            }
+        });
     }
 }

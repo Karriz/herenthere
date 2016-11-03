@@ -16,4 +16,29 @@
         android:layout_height="match_parent"
         tools:context="com.teamalpha.herenthere.GameActivity" />
 
+    <Button
+        android:text="Generate locations"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="38dp"
+        android:id="@+id/button2" />
+
+    <ProgressBar
+        style="@style/CustomProgressBarHorizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/progressBar2"
+        android:max="100"
+        android:progress="50"
+        android:minHeight="32dip"
+        android:maxHeight="32dip"
+        android:maxWidth="256dip"
+        android:minWidth="256dip"
+        android:scrollbarSize="32dip"
+        android:layout_marginTop="4dip" />
+
 </RelativeLayout>
