@@ -29,6 +29,14 @@ namespace HereAndThere.Models
         {
 
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
+            modelBuilder.Entity<Score>().HasRequired(x => x.player).WithMany(x => x.scores).WillCascadeOnDelete(false);
+            modelBuilder.Entity<Score>().HasRequired(x => x.spottedPlayer).WithMany(x => x.scoresAgainst);
+
+            modelBuilder.Entity<Player>().HasMany(x => x.matches).WithMany(x=>x.players).Map(configuration => {configuration.MapLeftKey("playerId");
+                configuration.MapRightKey("matchId");
+                configuration.ToTable("PlayerMatch");
+            } );
+
         }
     }
 }

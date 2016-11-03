@@ -1,19 +1,35 @@
+using System;
+using System.Data.Entity.Migrations;
+using HereAndThere.Models;
+
 namespace HereAndThere.Migrations
 {
-    using System;
-    using System.Data.Entity;
-    using System.Data.Entity.Migrations;
-    using System.Linq;
-
-    internal sealed class Configuration : DbMigrationsConfiguration<HereAndThere.Models.HereAndThereDbContext>
+    internal sealed class Configuration : DbMigrationsConfiguration<HereAndThereDbContext>
     {
         public Configuration()
         {
             AutomaticMigrationsEnabled = false;
         }
 
-        protected override void Seed(HereAndThere.Models.HereAndThereDbContext context)
+        protected override void Seed(HereAndThereDbContext context)
         {
+            context.matchTypes.AddOrUpdate(x => x.id,
+                new MatchType
+                {
+                    name = "DEFAULT",
+                    createdBy = "system",
+                    description = "Default Match Type",
+                    timeStamp = DateTime.Now
+                });
+            context.playerTypes.AddOrUpdate(x => x.id, new PlayerType
+            {
+                name = "DEFAULT",
+                createdBy = "system",
+                description = "Default Match Type",
+                timeStamp = DateTime.Now
+            });
+
+
             //  This method will be called after migrating to the latest version.
 
             //  You can use the DbSet<T>.AddOrUpdate() helper extension method 

@@ -14,6 +14,8 @@ C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\HereAndThere.dll
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\HereAndThere.pdb
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\Antlr3.Runtime.dll
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\EntityFramework.dll
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\EntityFramework.SqlServer.dll
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\Microsoft.Web.Infrastructure.dll
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\Newtonsoft.Json.dll
@@ -28,6 +30,8 @@ C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\System.Web.WebPages.dll
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\System.Web.WebPages.Razor.dll
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\WebGrease.dll
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\EntityFramework.xml
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\EntityFramework.SqlServer.xml
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.xml
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\Newtonsoft.Json.xml
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\System.Net.Http.Formatting.xml
@@ -42,9 +46,14 @@ C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\System.Web.WebPages.Razor.xml
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\Antlr3.Runtime.pdb
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.csprojResolveAssemblyReference.cache
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.Migrations.Initial.resources
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.Migrations.OneMovementManyLocations.resources
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.Migrations.addedTimeStamp.resources
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.Migrations.added_score_description.resources
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.Migrations.addedSpottePlayerToScore.resources
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.csproj.GenerateResource.Cache
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.dll
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.pdb
-C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\EntityFramework.dll
-C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\EntityFramework.SqlServer.dll
-C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\EntityFramework.xml
-C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\EntityFramework.SqlServer.xml
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\XmlDocument.xml
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.Migrations.ModelRefactoring.resources
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.Migrations.OnePlayerManyMatches_oneMatchManyPlayers.resources
