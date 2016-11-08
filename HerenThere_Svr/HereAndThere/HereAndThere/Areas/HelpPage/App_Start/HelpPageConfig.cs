@@ -44,7 +44,7 @@ namespace HereAndThere.Areas.HelpPage
             //    {typeof(string), "sample string"},
             //    {typeof(IEnumerable<string>), new string[]{"sample 1", "sample 2"}}
             //});
-
+          
             // Extend the following to provide factories for types not handled automatically (those lacking parameterless
             // constructors) or for which you prefer to use non-default property values. Line below provides a fallback
             // since automatic handling will fail and GeneratePageResult handles only a single type.

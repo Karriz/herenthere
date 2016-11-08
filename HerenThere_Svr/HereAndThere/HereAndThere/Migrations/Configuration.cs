@@ -13,7 +13,7 @@ namespace HereAndThere.Migrations
 
         protected override void Seed(HereAndThereDbContext context)
         {
-            context.matchTypes.AddOrUpdate(x => x.id,
+            context.matchTypes.AddOrUpdate(x => x.name,
                 new MatchType
                 {
                     name = "DEFAULT",
@@ -21,7 +21,7 @@ namespace HereAndThere.Migrations
                     description = "Default Match Type",
                     timeStamp = DateTime.Now
                 });
-            context.playerTypes.AddOrUpdate(x => x.id, new PlayerType
+            context.playerTypes.AddOrUpdate(x => x.name, new PlayerType
             {
                 name = "DEFAULT",
                 createdBy = "system",
