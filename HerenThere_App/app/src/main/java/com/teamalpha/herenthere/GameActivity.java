@@ -37,9 +37,15 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 
 public class GameActivity extends FragmentActivity implements
         OnMapReadyCallback,
@@ -63,6 +69,14 @@ public class GameActivity extends FragmentActivity implements
     private ProgressBar progressBar;
     private Button generateButton;
     private ListView scoreList;
+    private JSONObject matchData;
+
+    private int matchId;
+    private String playerName;
+
+    private int lastActualLocationId;
+
+    private List<String> playerScores = new ArrayList<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,8 +88,30 @@ public class GameActivity extends FragmentActivity implements
         mapFragment.getMapAsync(this);
 
         Intent intent = getIntent();
-        String name = intent.getStringExtra(CommonMethods.EXTRA_MESSAGE);
-        CommonMethods.showToastMessage(this, "Welcome, player " + name);
+        String matchStr = intent.getStringExtra("MatchStr");
+        String playerName = intent.getStringExtra("PlayerName");
+
+        try {
+            matchData = new JSONObject(matchStr);
+
+            matchId = matchData.getInt("id");
+
+            JSONArray players = matchData.getJSONArray("players");
+
+            playerScores = new ArrayList<String>();
+            for (int i=0;i<players.length();i++) {
+                JSONObject player = players.getJSONObject(i);
+                playerScores.add(player.getString("name")+": "+player.getInt("score"));
+            }
+
+            CommonMethods.showToastMessage(this, "Welcome, player " + playerName);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+
+            CommonMethods.showToastMessage(this, "Match JSON error!");
+            Log.e(TAG, "Match JSON error!");
+        }
 
         //Initializing googleapi client
         googleApiClient = new GoogleApiClient.Builder(this)
@@ -91,19 +127,15 @@ public class GameActivity extends FragmentActivity implements
         generateButton=(Button)findViewById(R.id.generateButton);
         scoreList =(ListView)findViewById(R.id.scoreList);
 
-        List<String> your_array_list = new ArrayList<String>();
-        your_array_list.add("foo");
-        your_array_list.add("bar");
-
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
                 this,
                 R.layout.player_item,
                 R.id.playerListItem,
-                your_array_list );
+                playerScores );
 
         scoreList.setAdapter(arrayAdapter);
 
-        HTTPGetTask httpGetTask = new HTTPGetTask();
+
 
         CountDownTimer countDownTimer = new CountDownTimer(30000, 1) {
 
@@ -118,20 +150,6 @@ public class GameActivity extends FragmentActivity implements
         };
 
         countDownTimer.start();
-
-        try {
-            httpGetTask.run("https://www.google.fi", this);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        HTTPPostTask httpPostTask = new HTTPPostTask();
-
-        try {
-            httpPostTask.post("https://www.google.fi", "body", this);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -201,7 +219,17 @@ public class GameActivity extends FragmentActivity implements
         mMap.setMinZoomPreference(14.0f);
         mMap.setMaxZoomPreference(21.0f);
 
-        mMap.setLatLngBoundsForCameraTarget(new LatLngBounds(new LatLng(65.008692, 25.451551),new LatLng(65.016454, 25.484114)));
+        try {
+            JSONArray boundaries = matchData.getJSONArray("boundaries");
+            JSONObject lowerLeft = boundaries.getJSONObject(0);
+            JSONObject upperRight = boundaries.getJSONObject(1);
+
+            mMap.setLatLngBoundsForCameraTarget(new LatLngBounds(new LatLng(lowerLeft.getDouble("latitude"), lowerLeft.getDouble("longitude")),new LatLng(upperRight.getDouble("latitude"), upperRight.getDouble("longitude"))));
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
 
         UiSettings uiSettings = mMap.getUiSettings();
         uiSettings.setTiltGesturesEnabled(false);
@@ -308,7 +336,40 @@ public class GameActivity extends FragmentActivity implements
         //moveMap(new LatLng(location.getLatitude(),location.getLongitude()));
 
         playerLocation = location;
-        Log.d(TAG,"Location changed: "+location.getLatitude()+", "+location.getLongitude());
+
+        String timeStamp = String.format("%tFT%<tTZ",
+                Calendar.getInstance(TimeZone.getTimeZone("Z")));
+
+        Log.d(TAG,"Time: "+timeStamp+", Location changed: "+location.getLatitude()+", "+location.getLongitude());
+
+
+        HTTPGetTask httpGetTask = new HTTPGetTask();
+
+        try {
+            httpGetTask.get("http://35.156.7.19/api/HereAndThere/GetOnGoingMatch", new CallbackInterface() {
+                @Override
+                public void onResponse(JSONObject result) throws JSONException {
+
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                        }
+                    });
+
+
+                }
+
+                @Override
+                public void onError() {
+
+                }
+
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

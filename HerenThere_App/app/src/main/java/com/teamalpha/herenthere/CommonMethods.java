@@ -3,13 +3,14 @@ package com.teamalpha.herenthere;
 import android.content.Context;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
 /**
  * Created by Karri on 15.10.2016.
  */
 
 public class CommonMethods {
 
-    public final static String EXTRA_MESSAGE = "com.teamalpha.herenthere.MESSAGE";
     private static final String TAG = "CommonMethods";
 
     public static void showToastMessage(Context context,String msg) {

@@ -1,6 +1,10 @@
 package com.teamalpha.herenthere;
 
+import android.app.Activity;
 import android.util.Log;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 
@@ -15,7 +19,7 @@ public class HTTPGetTask {
 
     OkHttpClient client = new OkHttpClient();
 
-    public void run(String url, final GameActivity context) throws IOException {
+    public void get(String url, final CallbackInterface callback) throws IOException {
         Request request = new Request.Builder()
                 .url(url)
                 .build();
@@ -25,15 +29,33 @@ public class HTTPGetTask {
                     @Override
                     public void onFailure(final Call call, IOException e) {
                         // Error
-
+                        try {
+                            callback.onError();
+                        } catch (JSONException e1) {
+                            e1.printStackTrace();
+                        }
                     }
 
                     @Override
                     public void onResponse(Call call, final Response response) throws IOException {
-                        String res = response.body().string();
-
-                        Log.d(TAG, res);
-                        context.testCallBack(res);
+                        if (response.code() == 200) {
+                            String res = response.body().string();
+                            Log.d(TAG, res);
+                            try {
+                                JSONObject obj = new JSONObject(res);
+                                callback.onResponse(obj);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        else {
+                            Log.e(TAG, "Server returned code "+response.code());
+                            try {
+                                callback.onError();
+                            } catch (JSONException e1) {
+                                e1.printStackTrace();
+                            }
+                        }
                     }
                 });
 

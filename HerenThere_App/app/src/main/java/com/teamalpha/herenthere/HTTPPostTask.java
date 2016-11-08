@@ -1,6 +1,10 @@
 package com.teamalpha.herenthere;
 
+import android.app.Activity;
 import android.util.Log;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 
@@ -20,12 +24,13 @@ public class HTTPPostTask {
 
     OkHttpClient client = new OkHttpClient();
 
-    public void post(String url, String json, final GameActivity context) throws IOException {
-        RequestBody body = RequestBody.create(JSON, json);
+    public void post(String url, final CallbackInterface callback) throws IOException {
+        RequestBody reqbody = RequestBody.create(null, new byte[0]);
 
         Request request = new Request.Builder()
                 .url(url)
-                .post(body)
+                .header("Content-Length", "0")
+                .method("POST",reqbody)
                 .build();
 
         client.newCall(request)
@@ -33,15 +38,35 @@ public class HTTPPostTask {
                     @Override
                     public void onFailure(final Call call, IOException e) {
                         // Error
-
+                        try {
+                            callback.onError();
+                        } catch (JSONException e1) {
+                            e1.printStackTrace();
+                        }
                     }
 
                     @Override
                     public void onResponse(Call call, final Response response) throws IOException {
-                        String res = response.body().string();
+                        if (response.code() == 200) {
+                            String res = response.body().string();
 
-                        Log.d(TAG, res);
-                        context.testCallBack(res);
+                            Log.d(TAG, res);
+
+                            try {
+                                JSONObject obj = new JSONObject(res);
+                                callback.onResponse(obj);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        else {
+                            Log.e(TAG, "Server returned code "+response.code());
+                            try {
+                                callback.onError();
+                            } catch (JSONException e1) {
+                                e1.printStackTrace();
+                            }
+                        }
                     }
                 });
 
