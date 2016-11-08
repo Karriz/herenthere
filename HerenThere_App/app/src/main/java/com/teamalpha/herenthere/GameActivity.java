@@ -31,7 +31,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
+import android.os.CountDownTimer;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.ProgressBar;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,6 +60,10 @@ public class GameActivity extends FragmentActivity implements
     private Location playerLocation;
     private List<Marker> playerMarkers;
 
+    private ProgressBar progressBar;
+    private Button generateButton;
+    private ListView scoreList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,7 +87,37 @@ public class GameActivity extends FragmentActivity implements
 
         playerMarkers = new ArrayList<Marker>();
 
+        progressBar=(ProgressBar)findViewById(R.id.progressBar);
+        generateButton=(Button)findViewById(R.id.generateButton);
+        scoreList =(ListView)findViewById(R.id.scoreList);
+
+        List<String> your_array_list = new ArrayList<String>();
+        your_array_list.add("foo");
+        your_array_list.add("bar");
+
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                this,
+                R.layout.player_item,
+                R.id.playerListItem,
+                your_array_list );
+
+        scoreList.setAdapter(arrayAdapter);
+
         HTTPGetTask httpGetTask = new HTTPGetTask();
+
+        CountDownTimer countDownTimer = new CountDownTimer(30000, 1) {
+
+            public void onTick(long millisUntilFinished) {
+                int progress = 1000* (int)millisUntilFinished / 30000;
+                progressBar.setProgress(progress);
+            }
+
+            public void onFinish() {
+
+            }
+        };
+
+        countDownTimer.start();
 
         try {
             httpGetTask.run("https://www.google.fi", this);
