@@ -118,7 +118,7 @@ namespace HereAndThere.Models
             movements=new HashSet<Movement>();
         }
     }
-    [TypeConverter(typeof(BoundaryTypeConvertor))]
+    //[TypeConverter(typeof(BoundaryTypeConvertor))]
     public class Boundary : Auditable
     {
        

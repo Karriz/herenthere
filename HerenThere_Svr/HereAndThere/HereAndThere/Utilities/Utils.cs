@@ -27,5 +27,10 @@ namespace HereAndThere.Utilities
             o.createdBy = "system";
             o.timeStamp = DateTime.Now;
         }
+        public static void SetAuditable(this Auditable o,DateTime timeStamp)
+        {
+            o.createdBy = "system";
+            o.timeStamp = timeStamp;
+        }
     }
 }
