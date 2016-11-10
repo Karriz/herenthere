@@ -36,10 +36,12 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -69,18 +71,27 @@ public class GameActivity extends FragmentActivity implements
     private ProgressBar progressBar;
     private Button generateButton;
     private ListView scoreList;
+    private TextView hintText;
+
+    private CountDownTimer timer = null;
+
     private JSONObject matchData;
 
     private int matchId;
     private String playerName;
-
     private int lastActualLocationId;
+
+    public boolean moving = false;
+    public String gameState = "locations"; //"locations", "spotting" or "moving"
 
     private List<String> playerScores = new ArrayList<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        CommonMethods.game = this;
+
         setContentView(R.layout.activity_game);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -126,6 +137,7 @@ public class GameActivity extends FragmentActivity implements
         progressBar=(ProgressBar)findViewById(R.id.progressBar);
         generateButton=(Button)findViewById(R.id.generateButton);
         scoreList =(ListView)findViewById(R.id.scoreList);
+        hintText = (TextView)findViewById(R.id.hintText);
 
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
                 this,
@@ -135,21 +147,7 @@ public class GameActivity extends FragmentActivity implements
 
         scoreList.setAdapter(arrayAdapter);
 
-
-
-        CountDownTimer countDownTimer = new CountDownTimer(30000, 1) {
-
-            public void onTick(long millisUntilFinished) {
-                int progress = 1000* (int)millisUntilFinished / 30000;
-                progressBar.setProgress(progress);
-            }
-
-            public void onFinish() {
-
-            }
-        };
-
-        countDownTimer.start();
+        changeState("locations");
     }
 
     @Override
@@ -165,7 +163,7 @@ public class GameActivity extends FragmentActivity implements
             // Acquire a reference to the system Location Manager
             locationManager = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
 
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100, 1, this);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
         }
 
         super.onStart();
@@ -298,7 +296,7 @@ public class GameActivity extends FragmentActivity implements
 
         ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
                 googleApiClient,
-                1000 /* detection interval */,
+                0 /* detection interval */,
                 pendingIntent);
     }
 
@@ -401,5 +399,77 @@ public class GameActivity extends FragmentActivity implements
                 CommonMethods.showToastMessage(context,msg);
             }
         });
+    }
+
+    public void changeState(String state) {
+        switch (state) {
+            case "locations":
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        gameState = "locations";
+
+                        if (timer != null) {
+                            timer.cancel();
+                        }
+
+                        hintText.setText("Create locations to hide yourself!");
+
+                        timer = new CountDownTimer(30000, 1) {
+                            public void onTick(long millisUntilFinished) {
+                                int progress = 1000* (int)millisUntilFinished / 30000;
+                                progressBar.setProgress(progress);
+                            }
+                            public void onFinish() {
+                                changeState("spotting");
+                            }
+                        };
+                        timer.start();
+                    }
+                });
+                break;
+            case "spotting":
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        gameState = "spotting";
+
+                        if (timer != null) {
+                            timer.cancel();
+                        }
+
+                        hintText.setText("Spot other players, or move");
+
+                    }
+                });
+
+                break;
+            case "moving":
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        gameState = "moving";
+
+                        if (timer != null) {
+                            timer.cancel();
+                        }
+
+                        hintText.setText("You can keep moving");
+
+                        timer = new CountDownTimer(30000, 1) {
+                            public void onTick(long millisUntilFinished) {
+                                int progress = 1000* (int)millisUntilFinished / 30000;
+                                progressBar.setProgress(progress);
+                            }
+                            public void onFinish() {
+                                hintText.setText("You are visible! Stop!");
+                            }
+                        };
+                        timer.start();
+                    }
+                });
+
+                break;
+        }
     }
 }

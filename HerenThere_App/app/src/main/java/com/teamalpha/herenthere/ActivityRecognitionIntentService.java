@@ -53,34 +53,42 @@ public class ActivityRecognitionIntentService extends IntentService {
             switch (activityType) {
                 case DetectedActivity.IN_VEHICLE: {
                     Log.d( "ActivityRecogition", "In Vehicle: " + mostProbableActivity.getConfidence() );
+                    CommonMethods.updateActivityState(true);
                     break;
                 }
                 case DetectedActivity.ON_BICYCLE: {
                     Log.d( "ActivityRecogition", "On Bicycle: " + mostProbableActivity.getConfidence() );
+                    CommonMethods.updateActivityState(true);
                     break;
                 }
                 case DetectedActivity.ON_FOOT: {
                     Log.d( "ActivityRecogition", "On Foot: " + mostProbableActivity.getConfidence() );
+                    CommonMethods.updateActivityState(true);
                     break;
                 }
                 case DetectedActivity.RUNNING: {
                     Log.d( "ActivityRecogition", "Running: " + mostProbableActivity.getConfidence() );
+                    CommonMethods.updateActivityState(true);
                     break;
                 }
                 case DetectedActivity.STILL: {
                     Log.d( "ActivityRecogition", "Still: " + mostProbableActivity.getConfidence() );
+                    CommonMethods.updateActivityState(false);
                     break;
                 }
                 case DetectedActivity.TILTING: {
                     Log.d( "ActivityRecogition", "Tilting: " + mostProbableActivity.getConfidence() );
+                    CommonMethods.updateActivityState(false);
                     break;
                 }
                 case DetectedActivity.WALKING: {
                     Log.d( "ActivityRecogition", "Walking: " + mostProbableActivity.getConfidence() );
+                    CommonMethods.updateActivityState(true);
                     break;
                 }
                 case DetectedActivity.UNKNOWN: {
                     Log.d( "ActivityRecogition", "Unknown: " + mostProbableActivity.getConfidence() );
+                    CommonMethods.updateActivityState(false);
                     break;
                 }
             }
