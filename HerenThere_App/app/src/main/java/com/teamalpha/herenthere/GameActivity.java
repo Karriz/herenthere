@@ -1,8 +1,13 @@
 package com.teamalpha.herenthere;
 
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
@@ -46,6 +51,7 @@ import org.w3c.dom.Text;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -57,7 +63,8 @@ public class GameActivity extends FragmentActivity implements
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMapClickListener,
         View.OnClickListener,
-        LocationListener {
+        LocationListener,
+        SensorEventListener{
 
     private static final String TAG = "GameActivity";
 
@@ -86,6 +93,17 @@ public class GameActivity extends FragmentActivity implements
 
     private List<String> playerScores = new ArrayList<String>();
 
+
+
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+
+    private float G_TRESHOLD = 1.2f;
+    private int stepTresholdMillis = 3000;
+    private long lastStepTime = 0;
+    private int stepCount = 0;
+    private int stepCountTreshold = 2;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,6 +115,14 @@ public class GameActivity extends FragmentActivity implements
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+
+        // Initialize Accelerometer sensor
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mAccelerometer = mSensorManager
+                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        startSensor();
+
 
         Intent intent = getIntent();
         String matchStr = intent.getStringExtra("MatchStr");
@@ -149,6 +175,12 @@ public class GameActivity extends FragmentActivity implements
 
         changeState("locations");
     }
+
+    private void startSensor() {
+        mSensorManager.registerListener(this, mAccelerometer,
+                SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
 
     @Override
     protected void onStart() {
@@ -294,10 +326,11 @@ public class GameActivity extends FragmentActivity implements
         Intent intent = new Intent(this, ActivityRecognitionIntentService.class);
         PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
+        /*ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
                 googleApiClient,
-                0 /* detection interval */,
+                0 ,
                 pendingIntent);
+        */
     }
 
     @Override
@@ -471,5 +504,43 @@ public class GameActivity extends FragmentActivity implements
 
                 break;
         }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        synchronized (this) {
+
+            if (event.sensor.getType() != Sensor.TYPE_ACCELEROMETER) {
+                return;
+            }
+
+            final float x = event.values[0];
+            final float y = event.values[1];
+            final float z = event.values[2];
+            final float g = Math.abs((x * x + y * y + z * z) / (SensorManager.GRAVITY_EARTH * SensorManager.GRAVITY_EARTH));
+            long currentTime = System.currentTimeMillis();
+            if (g > G_TRESHOLD) {
+
+                if (lastStepTime != 0) {
+                    if (currentTime - lastStepTime <= stepTresholdMillis) {
+                        Log.d(TAG, "Step taken: " + g);
+                        CommonMethods.updateActivityState(true);
+                        return;
+                    }
+                }
+                stepCount ++;
+                lastStepTime = System.currentTimeMillis();
+            }
+
+            if (lastStepTime == 0 || currentTime - lastStepTime > stepTresholdMillis) {
+                CommonMethods.updateActivityState(false);
+                stepCount = 0;
+            }
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 }

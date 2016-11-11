@@ -12,6 +12,7 @@ import org.json.JSONObject;
 
 public class CommonMethods {
 
+    public static boolean sensorInitialized = false;
     private static final String TAG = "CommonMethods";
     public static GameActivity game = null;
 
