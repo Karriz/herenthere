@@ -175,6 +175,14 @@
     <Compile Include="Migrations\201611032242500_OnePlayerManyMatches_oneMatchManyPlayers.Designer.cs">
       <DependentUpon>201611032242500_OnePlayerManyMatches_oneMatchManyPlayers.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201611081036214_udpatedDecimalPrecision.cs" />
+    <Compile Include="Migrations\201611081036214_udpatedDecimalPrecision.Designer.cs">
+      <DependentUpon>201611081036214_udpatedDecimalPrecision.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201611081059460_addedBoundaryName.cs" />
+    <Compile Include="Migrations\201611081059460_addedBoundaryName.Designer.cs">
+      <DependentUpon>201611081059460_addedBoundaryName.cs</DependentUpon>
+    </Compile>
     <Compile Include="TypeConvertors\BoundaryTypeConvertor.cs" />
     <Compile Include="Utilities\ExceptionProcessor.cs" />
     <Compile Include="Utilities\Utils.cs" />
@@ -295,6 +303,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201611032242500_OnePlayerManyMatches_oneMatchManyPlayers.resx">
       <DependentUpon>201611032242500_OnePlayerManyMatches_oneMatchManyPlayers.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201611081036214_udpatedDecimalPrecision.resx">
+      <DependentUpon>201611081036214_udpatedDecimalPrecision.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201611081059460_addedBoundaryName.resx">
+      <DependentUpon>201611081059460_addedBoundaryName.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
