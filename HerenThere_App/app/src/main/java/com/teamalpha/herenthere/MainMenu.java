@@ -96,7 +96,7 @@ public class MainMenu extends AppCompatActivity {
                     public void onResponse(JSONObject result) throws JSONException {
 
                         if (result.has("playerId")) {
-
+                            final int playerId = result.getInt("playerId");
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -106,6 +106,7 @@ public class MainMenu extends AppCompatActivity {
                                     Intent intent = new Intent(_this, GameActivity.class);
                                     intent.putExtra("MatchStr", matchStr);
                                     intent.putExtra("PlayerName", name);
+                                    intent.putExtra("PlayerId", playerId);
                                     startActivity(intent);
                                 }
                             });

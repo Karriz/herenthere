@@ -86,9 +86,11 @@ public class GameActivity extends FragmentActivity implements
 
     private int matchId;
     private String playerName;
+    private int playerId;
     private int lastActualLocationId;
 
     public boolean moving = false;
+    private boolean playerIsVisible = false;
     public String gameState = "locations"; //"locations", "spotting" or "moving"
 
     private List<String> playerScores = new ArrayList<String>();
@@ -121,12 +123,13 @@ public class GameActivity extends FragmentActivity implements
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager
                 .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        startSensor();
+        //startSensor();
 
 
         Intent intent = getIntent();
         String matchStr = intent.getStringExtra("MatchStr");
-        String playerName = intent.getStringExtra("PlayerName");
+        playerName = intent.getStringExtra("PlayerName");
+        playerId = intent.getIntExtra("PlayerId",-1);
 
         try {
             matchData = new JSONObject(matchStr);
@@ -195,7 +198,7 @@ public class GameActivity extends FragmentActivity implements
             // Acquire a reference to the system Location Manager
             locationManager = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
 
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 2, this);
         }
 
         super.onStart();
@@ -326,11 +329,11 @@ public class GameActivity extends FragmentActivity implements
         Intent intent = new Intent(this, ActivityRecognitionIntentService.class);
         PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        /*ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
                 googleApiClient,
                 0 ,
                 pendingIntent);
-        */
+
     }
 
     @Override
@@ -365,19 +368,55 @@ public class GameActivity extends FragmentActivity implements
 
     public void onLocationChanged(Location location) {
         //moveMap(new LatLng(location.getLatitude(),location.getLongitude()));
-
         playerLocation = location;
+        List<Location> locations = new ArrayList<Location>();
+        locations.add(location);
+        postLocationsToServer(locations, true);
+
+    }
+
+    public void postLocationsToServer(List<Location> locationList, boolean isActual) {
 
         String timeStamp = String.format("%tFT%<tTZ",
                 Calendar.getInstance(TimeZone.getTimeZone("Z")));
 
-        Log.d(TAG,"Time: "+timeStamp+", Location changed: "+location.getLatitude()+", "+location.getLongitude());
+        //Log.d(TAG,"Time: "+timeStamp+", Location changed: "+location.getLatitude()+", "+location.getLongitude());
 
 
-        HTTPGetTask httpGetTask = new HTTPGetTask();
+        HTTPPostTask httpPostTask = new HTTPPostTask();
+
+        String url = "http://35.156.7.19/api/HereAndThere/AddPlayerActivity?activity=";
+
+        JSONObject request = new JSONObject();
+        try {
+            request.put("playerId", playerId);
+            request.put("matchId", matchId);
+            request.put("timeStamp", timeStamp);
+            request.put("isMoving", moving);
+
+            JSONArray locations = new JSONArray();
+
+            for (int i=0; i<locationList.size();i++) {
+                Location location = locationList.get(i);
+                JSONObject locationObj = new JSONObject();
+                locationObj.put("latitude", location.getLatitude());
+                locationObj.put("longitude", location.getLongitude());
+                locationObj.put("isActual", isActual);
+                locationObj.put("isVisible", playerIsVisible);
+                locationObj.put("timeStamp", timeStamp);
+
+                locations.put(locationObj);
+            }
+
+            request.put("locations", locations);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
 
         try {
-            httpGetTask.get("http://35.156.7.19/api/HereAndThere/GetOnGoingMatch", new CallbackInterface() {
+            httpPostTask.post(url+request.toString(), new CallbackInterface() {
                 @Override
                 public void onResponse(JSONObject result) throws JSONException {
 
@@ -446,6 +485,7 @@ public class GameActivity extends FragmentActivity implements
                             timer.cancel();
                         }
 
+                        playerIsVisible = true;
                         hintText.setText("Create locations to hide yourself!");
 
                         timer = new CountDownTimer(30000, 1) {
@@ -487,6 +527,7 @@ public class GameActivity extends FragmentActivity implements
                             timer.cancel();
                         }
 
+                        playerIsVisible = false;
                         hintText.setText("You can keep moving");
 
                         timer = new CountDownTimer(30000, 1) {
@@ -496,6 +537,7 @@ public class GameActivity extends FragmentActivity implements
                             }
                             public void onFinish() {
                                 hintText.setText("You are visible! Stop!");
+                                playerIsVisible = true;
                             }
                         };
                         timer.start();
