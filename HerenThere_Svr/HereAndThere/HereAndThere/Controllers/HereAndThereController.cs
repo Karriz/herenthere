@@ -14,11 +14,12 @@ namespace HereAndThere.Controllers
     public class HereAndThereController : ApiController
     {
         /// <summary>
-        /// Gets an ongoing Match. you can use GetMa
+        ///     Gets an ongoing Match. you can use GetMatchInfo, if you have the matchId
         /// </summary>
-        /// <param name="activity"></param>
-        /// <returns>Match</returns>
-        [ResponseType(typeof(Match))]
+        /// <returns>
+        ///     Ongoing Match Info example
+        ///     {"id":1,"startTime":"2016-11-07T21:00:29","endTime":"2016-11-10T09:51:28.78","playerCount":3,"players":[{"name":"karri","score":0.0,"id":1},{"name":"test2","score":0.0,"id":4},{"name":"k","score":0.0,"id":5}],"boundaries":[{"name":"lowerLeft","latitude":65.0519270000,"longitude":25.4474250000},{"name":"upperRight","latitude":65.0640070000,"longitude":25.4756460000}]}
+        /// </returns>
         public IHttpActionResult GetOnGoingMatch()
         {
             try
@@ -29,7 +30,7 @@ namespace HereAndThere.Controllers
                         .OrderByDescending(x => x.startTime)
                         .FirstOrDefault();
                     if (match == null) return BadRequest("No Ongoing Match");
-                    return Ok(match);
+                    return GetMatchInfo((int) match.id);
                 }
             }
             catch (Exception ex)
@@ -53,7 +54,9 @@ namespace HereAndThere.Controllers
         ///     ]
         ///     }
         /// </param>
-        /// <returns></returns>
+        /// <returns>list of player locations example:  [
+        ///     {"id":1,"latitude":0.1,"longitude":0.1,"isActual":true,"isVisible":true,"timeStamp":"2016-11-07T23:28:40.406Z","playerId":1,"matchId":1}
+        ///     ]</returns>
         [
             HttpPost]
         public IHttpActionResult AddPlayerActivity(string activity)
@@ -115,7 +118,24 @@ namespace HereAndThere.Controllers
                     }
                     db.locations.AddRange(locations);
                     db.SaveChanges();
-                    return Ok("Player Activity Added Sucessfully");
+
+                    var returnedLocations =
+                        locations.Select(
+                            x =>
+                                new
+                                {
+                                    x.id,
+                                    x.latitude,
+                                    x.longitude,
+                                  
+                                    x.isActual,
+                                    x.isVisible,
+                                    x.timeStamp,
+                                    x.movement.playerId,
+                                    x.movement.matchId
+                                }).ToList();
+
+                    return Ok(returnedLocations);
                 }
             }
             catch (Exception exception)
@@ -221,7 +241,10 @@ namespace HereAndThere.Controllers
         ///     Get the General Information about a match , all Players and their scores
         /// </summary>
         /// <param name="matchId"></param>
-        /// <returns></returns>
+        /// <returns>
+        ///     The Match Info example :
+        ///     {"id":1,"startTime":"2016-11-07T21:00:29","endTime":"2016-11-10T09:51:28.78","playerCount":3,"players":[{"name":"karri","score":0.0,"id":1},{"name":"test2","score":0.0,"id":4},{"name":"k","score":0.0,"id":5}],"boundaries":[{"name":"lowerLeft","latitude":65.0519270000,"longitude":25.4474250000},{"name":"upperRight","latitude":65.0640070000,"longitude":25.4756460000}]}
+        /// </returns>
         public IHttpActionResult GetMatchInfo(int matchId)
         {
             try
@@ -233,7 +256,7 @@ namespace HereAndThere.Controllers
 
                     var players =
                         match.players.Select(x => new {x.name, score = x.scores.Sum(t => t.point), x.id}).ToList();
-                    var boundaries = match.boundaries.Select(x => new {x.latitude, x.longitude}).ToList();
+                    var boundaries = match.boundaries.Select(x => new {x.name, x.latitude, x.longitude}).ToList();
 
                     var result = new
                     {
@@ -403,7 +426,8 @@ namespace HereAndThere.Controllers
         }
 
         /// <summary>
-        ///     Adds a new Match. For now, if there is an ongoing Match, request is ignored and ongoing Match is returned. To extend the duration of a Match please use ExtendMatchTime API
+        ///     Adds a new Match. For now, if there is an ongoing Match, request is ignored and ongoing Match is returned. To
+        ///     extend the duration of a Match please use ExtendMatchTime API
         /// </summary>
         /// <param name="startTime">DateTime the match start</param>
         /// <param name="endTime">DateTime the match ends</param>
@@ -430,9 +454,19 @@ namespace HereAndThere.Controllers
                         return Ok(onGoingMatch);
 
                     var match = new Match();
-                    var lowerLeft = new Boundary {latitude = lowerLeftLatitude, longitude = lowerLeftLongitude};
+                    var lowerLeft = new Boundary
+                    {
+                        name = "lowerLeft",
+                        latitude = lowerLeftLatitude,
+                        longitude = lowerLeftLongitude
+                    };
                     lowerLeft.SetAuditable();
-                    var upperRight = new Boundary {latitude = lowerLeftLatitude, longitude = lowerLeftLongitude};
+                    var upperRight = new Boundary
+                    {
+                        name = "upperRight",
+                        latitude = upperRightLatitude,
+                        longitude = upperRightLatitude
+                    };
                     upperRight.SetAuditable();
 
 
@@ -535,7 +569,7 @@ namespace HereAndThere.Controllers
             }
         }
 
-       
+
         //    public IHttpActionResult PutPlayer(long id, Player player)
         //    [ResponseType(typeof(void))]
 

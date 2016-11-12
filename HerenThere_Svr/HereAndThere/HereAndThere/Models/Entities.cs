@@ -121,7 +121,7 @@ namespace HereAndThere.Models
     //[TypeConverter(typeof(BoundaryTypeConvertor))]
     public class Boundary : Auditable
     {
-       
+        public string name { get; set; }
         public long matchId { get; set; }
         public decimal latitude { get; set; }
         public decimal longitude { get; set; }

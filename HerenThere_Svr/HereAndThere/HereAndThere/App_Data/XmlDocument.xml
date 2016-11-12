@@ -487,10 +487,12 @@
         </member>
         <member name="M:HereAndThere.Controllers.HereAndThereController.GetOnGoingMatch">
             <summary>
-            Gets an ongoing Match. you can use GetMa
+                Gets an ongoing Match. you can use GetMatchInfo, if you have the matchId
             </summary>
-            <param name="activity"></param>
-            <returns>Match</returns>
+            <returns>
+                Ongoing Match Info example
+                {"id":1,"startTime":"2016-11-07T21:00:29","endTime":"2016-11-10T09:51:28.78","playerCount":3,"players":[{"name":"karri","score":0.0,"id":1},{"name":"test2","score":0.0,"id":4},{"name":"k","score":0.0,"id":5}],"boundaries":[{"name":"lowerLeft","latitude":65.0519270000,"longitude":25.4474250000},{"name":"upperRight","latitude":65.0640070000,"longitude":25.4756460000}]}
+            </returns>
         </member>
         <member name="M:HereAndThere.Controllers.HereAndThereController.AddPlayerActivity(System.String)">
             <summary>
@@ -508,7 +510,9 @@
                 ]
                 }
             </param>
-            <returns></returns>
+            <returns>list of player locations example:  [
+                {"id":1,"latitude":0.1,"longitude":0.1,"isActual":true,"isVisible":true,"timeStamp":"2016-11-07T23:28:40.406Z","playerId":1,"matchId":1}
+                ]</returns>
         </member>
         <member name="M:HereAndThere.Controllers.HereAndThereController.MakeLocationInvisible(System.String)">
             <summary>
@@ -536,7 +540,10 @@
                 Get the General Information about a match , all Players and their scores
             </summary>
             <param name="matchId"></param>
-            <returns></returns>
+            <returns>
+                The Match Info example :
+                {"id":1,"startTime":"2016-11-07T21:00:29","endTime":"2016-11-10T09:51:28.78","playerCount":3,"players":[{"name":"karri","score":0.0,"id":1},{"name":"test2","score":0.0,"id":4},{"name":"k","score":0.0,"id":5}],"boundaries":[{"name":"lowerLeft","latitude":65.0519270000,"longitude":25.4474250000},{"name":"upperRight","latitude":65.0640070000,"longitude":25.4756460000}]}
+            </returns>
         </member>
         <member name="M:HereAndThere.Controllers.HereAndThereController.GetPlayers">
             <summary>
@@ -568,7 +575,8 @@
         </member>
         <member name="M:HereAndThere.Controllers.HereAndThereController.AddMatch(System.Decimal,System.Decimal,System.Decimal,System.Decimal,System.DateTime,System.DateTime)">
             <summary>
-                Adds a new Match. For now, if there is an ongoing Match, request is ignored and ongoing Match is returned. To extend the duration of a Match please use ExtendMatchTime API
+                Adds a new Match. For now, if there is an ongoing Match, request is ignored and ongoing Match is returned. To
+                extend the duration of a Match please use ExtendMatchTime API
             </summary>
             <param name="startTime">DateTime the match start</param>
             <param name="endTime">DateTime the match ends</param>

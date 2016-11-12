@@ -37,6 +37,10 @@ namespace HereAndThere.Models
                 configuration.ToTable("PlayerMatch");
             } );
 
+            modelBuilder.Entity<Boundary>().Property(x => x.latitude).HasPrecision(16, 10);
+            modelBuilder.Entity<Boundary>().Property(x => x.longitude).HasPrecision(16, 10);
+            modelBuilder.Entity<Location>().Property(x => x.latitude).HasPrecision(16, 10);
+            modelBuilder.Entity<Location>().Property(x => x.longitude).HasPrecision(16, 10);
         }
     }
 }

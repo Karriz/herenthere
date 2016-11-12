@@ -56,5 +56,6 @@ C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.csproj.GenerateResource.Cache
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.dll
 C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.pdb
-C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\HereAndThere.dll.CodeAnalysisLog.xml
-C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\bin\HereAndThere.dll.lastcodeanalysissucceeded
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.csprojResolveAssemblyReference.cache
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.Migrations.udpatedDecimalPrecision.resources
+C:\Users\opoku\Source\Repos\herenthere\HerenThere_Svr\HereAndThere\HereAndThere\obj\Debug\HereAndThere.Migrations.addedBoundaryName.resources
