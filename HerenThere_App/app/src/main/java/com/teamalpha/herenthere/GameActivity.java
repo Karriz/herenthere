@@ -87,14 +87,16 @@ public class GameActivity extends FragmentActivity implements
     private int matchId;
     private String playerName;
     private int playerId;
+
     private int lastActualLocationId;
+    private List<Integer> fakeLocationIds = new ArrayList<Integer>();
 
     public boolean moving = false;
     private boolean playerIsVisible = false;
     public String gameState = "locations"; //"locations", "spotting" or "moving"
 
     private List<String> playerScores = new ArrayList<String>();
-
+    private ArrayAdapter<String> arrayAdapter;
 
 
     private SensorManager mSensorManager;
@@ -168,7 +170,7 @@ public class GameActivity extends FragmentActivity implements
         scoreList =(ListView)findViewById(R.id.scoreList);
         hintText = (TextView)findViewById(R.id.hintText);
 
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+        arrayAdapter = new ArrayAdapter<String>(
                 this,
                 R.layout.player_item,
                 R.id.playerListItem,
@@ -177,11 +179,16 @@ public class GameActivity extends FragmentActivity implements
         scoreList.setAdapter(arrayAdapter);
 
         changeState("locations");
+
+        CommonMethods.startGameLoop();
     }
 
     private void startSensor() {
-        mSensorManager.registerListener(this, mAccelerometer,
-                SensorManager.SENSOR_DELAY_NORMAL);
+        if (!CommonMethods.sensorInitialized) {
+            mSensorManager.registerListener(this, mAccelerometer,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+            CommonMethods.sensorInitialized = true;
+        }
     }
 
 
@@ -307,6 +314,7 @@ public class GameActivity extends FragmentActivity implements
                 .position(latlng)); //setting position
 
         playerMarkers.add(newMarker);
+
         return newMarker;
     }
 
@@ -375,7 +383,7 @@ public class GameActivity extends FragmentActivity implements
 
     }
 
-    public void postLocationsToServer(List<Location> locationList, boolean isActual) {
+    public void postLocationsToServer(List<Location> locationList, final boolean isActual) {
 
         String timeStamp = String.format("%tFT%<tTZ",
                 Calendar.getInstance(TimeZone.getTimeZone("Z")));
@@ -420,6 +428,19 @@ public class GameActivity extends FragmentActivity implements
                 @Override
                 public void onResponse(JSONObject result) throws JSONException {
 
+                    if (result.has("locations")) {
+                        JSONArray locations = result.getJSONArray("locations");
+                        if (isActual) {
+                            lastActualLocationId = locations.getJSONObject(0).getInt("id");
+                        }
+                        else {
+                            fakeLocationIds.clear();
+                            for (int i=0;i<locations.length();i++) {
+                                JSONObject location = locations.getJSONObject(i);
+                                fakeLocationIds.add(location.getInt("id"));
+                            }
+                        }
+                    }
 
                     runOnUiThread(new Runnable() {
                         @Override
@@ -433,7 +454,69 @@ public class GameActivity extends FragmentActivity implements
 
                 @Override
                 public void onError() {
+                    Log.e(TAG, "Error while posting locations!");
+                }
 
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateMarkers() {
+        HTTPGetTask httpGetTask = new HTTPGetTask();
+
+        try {
+            httpGetTask.get("http://35.156.7.19/api/HereAndThere/GetAllPlayerLocations?matchId="+matchId, new CallbackInterface() {
+                @Override
+                public void onResponse(JSONObject result) throws JSONException {
+
+                }
+
+                @Override
+                public void onError() {
+                    Log.e(TAG, "Error getting locations!");
+                }
+
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateScores() {
+        HTTPGetTask httpGetTask = new HTTPGetTask();
+
+        try {
+            httpGetTask.get("http://35.156.7.19/api/HereAndThere/GetMatchScores?matchId="+matchId, new CallbackInterface() {
+                @Override
+                public void onResponse(JSONObject result) throws JSONException {
+
+                    final JSONObject response = result;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            JSONArray players = null;
+                            try {
+                                players = response.getJSONArray("response");
+                                playerScores = new ArrayList<String>();
+                                for (int i=0;i<players.length();i++) {
+                                    JSONObject player = players.getJSONObject(i);
+                                    playerScores.add(player.getString("name")+": "+player.getInt("score"));
+                                }
+                                arrayAdapter.notifyDataSetChanged();
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+
+                        }
+                    });
+                }
+
+                @Override
+                public void onError() {
+                    Log.e(TAG, "Error getting scores!");
                 }
 
             });
@@ -461,6 +544,16 @@ public class GameActivity extends FragmentActivity implements
     public void onMapClick(LatLng latLng) {
         Log.d(TAG,"Map was clicked at position: "+latLng.latitude+" ,"+latLng.longitude);
         addMarker(latLng);
+
+        List<Location> locations = new ArrayList<Location>();
+
+        Location location = new Location("");
+        location.setLatitude(latLng.latitude);
+        location.setLongitude(latLng.longitude);
+
+        locations.add(location);
+
+        postLocationsToServer(locations, false);
     }
 
     public void testCallBack(final String msg) {

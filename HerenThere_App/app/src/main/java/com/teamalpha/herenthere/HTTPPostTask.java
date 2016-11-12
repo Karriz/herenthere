@@ -52,6 +52,10 @@ public class HTTPPostTask {
 
                             Log.d(TAG, res);
 
+                            if (res.charAt(0) != '{') {
+                                res = "{response:"+res+"}";
+                            }
+
                             try {
                                 JSONObject obj = new JSONObject(res);
                                 callback.onResponse(obj);

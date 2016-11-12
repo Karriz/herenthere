@@ -41,6 +41,11 @@ public class HTTPGetTask {
                         if (response.code() == 200) {
                             String res = response.body().string();
                             Log.d(TAG, res);
+
+                            if (res.charAt(0) != '{') {
+                                res = "{response:"+res+"}";
+                            }
+
                             try {
                                 JSONObject obj = new JSONObject(res);
                                 callback.onResponse(obj);

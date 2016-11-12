@@ -1,6 +1,7 @@
 package com.teamalpha.herenthere;
 
 import android.content.Context;
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -15,6 +16,10 @@ public class CommonMethods {
     public static boolean sensorInitialized = false;
     private static final String TAG = "CommonMethods";
     public static GameActivity game = null;
+
+    private static CountDownTimer gameUpdateTimer = null;
+
+
 
     public static void showToastMessage(Context context,String msg) {
         int duration = Toast.LENGTH_SHORT;
@@ -35,6 +40,25 @@ public class CommonMethods {
                 game.changeState("locations");
             }
         }
+    }
+
+    public static void startGameLoop() {
+        if (gameUpdateTimer != null) gameUpdateTimer.cancel();
+
+        gameUpdateTimer = new CountDownTimer(2000, 100) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+
+            }
+
+            @Override
+            public void onFinish() {
+                game.updateMarkers();
+                game.updateScores();
+                startGameLoop();
+            }
+        };
+        gameUpdateTimer.start();
     }
 
 }
