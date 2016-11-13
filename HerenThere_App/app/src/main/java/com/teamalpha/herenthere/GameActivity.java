@@ -743,6 +743,45 @@ public class GameActivity extends FragmentActivity implements
         }
     }
 
+    public void hideAllLocations() {
+        String timeStamp = String.format("%tFT%<tTZ",
+                Calendar.getInstance(TimeZone.getTimeZone("Z")));
+
+        //Log.d(TAG,"Time: "+timeStamp+", Location changed: "+location.getLatitude()+", "+location.getLongitude());
+
+
+        HTTPPostTask httpPostTask = new HTTPPostTask();
+
+        String url = "http://35.156.7.19/api/HereAndThere/MakeLocationPlayerInvisible?playerId="+playerId+"&matchId="+matchId;
+
+        try {
+            httpPostTask.post(url, new CallbackInterface() {
+                @Override
+                public void onResponse(JSONObject result) throws JSONException {
+
+                    Log.d(TAG, "locations hidden successfully");
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                        }
+                    });
+
+
+                }
+
+                @Override
+                public void onError() {
+                    Log.e(TAG, "Error while hiding locations!");
+                }
+
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void changeState(String state) {
         switch (state) {
             case "locations":
@@ -753,7 +792,7 @@ public class GameActivity extends FragmentActivity implements
                         generateButton.setEnabled(true);
 
                         fakeLocationAmount = 0;
-                        hideLocations(fakeLocationIds);
+                        hideAllLocations();
                         fakeLocationIds.clear();
 
                         if (timer != null) {
