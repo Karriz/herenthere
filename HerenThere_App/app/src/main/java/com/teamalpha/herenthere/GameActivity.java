@@ -229,7 +229,7 @@ public class GameActivity extends FragmentActivity implements
             // Acquire a reference to the system Location Manager
             locationManager = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
 
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 2, this);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, this);
         }
 
         super.onStart();
@@ -306,6 +306,7 @@ public class GameActivity extends FragmentActivity implements
             @Override
             public boolean onMarkerClick ( Marker marker )
             {
+                boolean locationFound = false;
                 if (gameState == "spotting") {
                     for (int i = 0; i < playerMarkers.size(); i++) {
                         if (marker.equals(playerMarkers.get(i))) {
@@ -313,13 +314,16 @@ public class GameActivity extends FragmentActivity implements
                                 if (actualMarkers.get(i) == true) {
                                     CommonMethods.showToastMessage(CommonMethods.game, "Great! You get 10 points!");
                                     postScore(10, markerIds.get(i));
+                                    locationFound = true;
                                     break;
                                 }
                             }
                         }
                     }
 
-                    CommonMethods.showToastMessage(CommonMethods.game, "That's a fake location.");
+                    if (!locationFound) {
+                        CommonMethods.showToastMessage(CommonMethods.game, "That's a fake location.");
+                    }
                 }
                 return true;
             }
@@ -798,6 +802,10 @@ public class GameActivity extends FragmentActivity implements
                         if (timer != null) {
                             timer.cancel();
                         }
+
+                        List<Integer> lastLocation = new ArrayList<Integer>();
+                        lastLocation.add(lastActualLocationId);
+                        hideLocations(lastLocation);
 
                         generateButton.setEnabled(false);
 

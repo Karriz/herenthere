@@ -57,7 +57,7 @@ public class CommonMethods {
                 if (game.endTime != 0) {
                     long diff = game.endTime - System.currentTimeMillis();
                     if (diff > 0) {
-                        Log.d(TAG, "time left: "+diff);
+                        //Log.d(TAG, "time left: "+diff);
                     }
                     else {
                         game.changeState("ended");
