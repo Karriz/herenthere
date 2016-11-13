@@ -17,6 +17,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
 
@@ -51,6 +52,9 @@ import org.json.JSONObject;
 import org.w3c.dom.Text;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -114,6 +118,8 @@ public class GameActivity extends FragmentActivity implements
     private int stepCount = 0;
     private int stepCountTreshold = 2;
 
+    public long endTime = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -145,6 +151,17 @@ public class GameActivity extends FragmentActivity implements
             matchId = matchData.getInt("id");
 
             JSONArray players = matchData.getJSONArray("players");
+
+            String endTimeStr = matchData.getString("endTime");
+
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            try {
+                Date date = dateFormat.parse(endTimeStr);
+                endTime = date.getTime();
+            } catch ( ParseException e) {
+                e.printStackTrace();
+            }
 
             playerIds.clear();
             playerScores = new ArrayList<String>();
@@ -287,7 +304,21 @@ public class GameActivity extends FragmentActivity implements
             @Override
             public boolean onMarkerClick ( Marker marker )
             {
-                // do nothing
+                if (gameState == "spotting") {
+                    for (int i = 0; i < playerMarkers.size(); i++) {
+                        if (marker.equals(playerMarkers.get(i))) {
+                            if (markerIds.get(i) != playerId) {
+                                if (actualMarkers.get(i) == true) {
+                                    CommonMethods.showToastMessage(CommonMethods.game, "Great! You get 10 points!");
+                                    postScore(10, markerIds.get(i));
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    CommonMethods.showToastMessage(CommonMethods.game, "That's a fake location.");
+                }
                 return true;
             }
         });
@@ -379,7 +410,7 @@ public class GameActivity extends FragmentActivity implements
 
     @Override
     public void onConnectionSuspended(int i) {
-        
+
     }
 
     @Override
@@ -410,13 +441,58 @@ public class GameActivity extends FragmentActivity implements
     public void onLocationChanged(Location location) {
         //moveMap(new LatLng(location.getLatitude(),location.getLongitude()));
 
-        List<Integer> lastLocation = new ArrayList<Integer>();
-        lastLocation.add(lastActualLocationId);
-        hideLocations(lastLocation);
-        playerLocation = location;
-        List<Location> locations = new ArrayList<Location>();
-        locations.add(location);
-        postLocationsToServer(locations, true);
+        if (gameState != "ended") {
+            List<Integer> lastLocation = new ArrayList<Integer>();
+            lastLocation.add(lastActualLocationId);
+            hideLocations(lastLocation);
+            playerLocation = location;
+            List<Location> locations = new ArrayList<Location>();
+            locations.add(location);
+            postLocationsToServer(locations, true);
+        }
+    }
+
+    public void postScore(int amount, int spottedId) {
+        String timeStamp = String.format("%tFT%<tTZ",
+                Calendar.getInstance(TimeZone.getTimeZone("Z")));
+
+        //Log.d(TAG,"Time: "+timeStamp+", Location changed: "+location.getLatitude()+", "+location.getLongitude());
+
+
+        HTTPPostTask httpPostTask = new HTTPPostTask();
+
+        String url = "http://35.156.7.19/api/HereAndThere/AddPlayeScore?playerId=";
+
+        url = url + playerId;
+        url = url + "&matchId="+matchId;
+        url = url + "&point="+amount;
+        url = url + "&timeStamp="+timeStamp;
+        url = url + "&spottedPlayerId="+ spottedId;
+
+        try {
+            httpPostTask.post(url, new CallbackInterface() {
+                @Override
+                public void onResponse(JSONObject result) throws JSONException {
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                        }
+                    });
+
+
+                }
+
+                @Override
+                public void onError() {
+                    Log.e(TAG, "Error while posting score!");
+                }
+
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void postLocationsToServer(List<Location> locationList, final boolean isActual) {
@@ -596,18 +672,20 @@ public class GameActivity extends FragmentActivity implements
 
     @Override
     public void onMapClick(LatLng latLng) {
-        Log.d(TAG,"Map was clicked at position: "+latLng.latitude+" ,"+latLng.longitude);
-        addMarker(latLng, playerId, false);
+        if (gameState == "locations") {
+            Log.d(TAG, "Map was clicked at position: " + latLng.latitude + " ," + latLng.longitude);
+            addMarker(latLng, playerId, false);
 
-        List<Location> locations = new ArrayList<Location>();
+            List<Location> locations = new ArrayList<Location>();
 
-        Location location = new Location("");
-        location.setLatitude(latLng.latitude);
-        location.setLongitude(latLng.longitude);
+            Location location = new Location("");
+            location.setLatitude(latLng.latitude);
+            location.setLongitude(latLng.longitude);
 
-        locations.add(location);
+            locations.add(location);
 
-        postLocationsToServer(locations, false);
+            postLocationsToServer(locations, false);
+        }
     }
 
     public void hideLocations(List<Integer> locations) {
@@ -729,6 +807,16 @@ public class GameActivity extends FragmentActivity implements
                     }
                 });
 
+                break;
+
+            case "ended":
+                gameState = "ended";
+                CommonMethods.stopGameLoop();
+                if (timer != null) {
+                    timer.cancel();
+                }
+                progressBar.setProgress(0);
+                hintText.setText("The game has ended");
                 break;
         }
     }

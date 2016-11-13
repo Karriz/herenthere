@@ -30,14 +30,16 @@ public class CommonMethods {
 
     public static void updateActivityState(boolean moving) {
         if (game != null) {
-            Log.d(TAG, "Player is moving:" + moving);
-            game.moving = moving;
-            if (moving) {
-                if (game.gameState != "moving") {
-                    game.changeState("moving");
+            if (game.gameState != "ended") {
+                Log.d(TAG, "Player is moving:" + moving);
+                game.moving = moving;
+                if (moving) {
+                    if (game.gameState != "moving") {
+                        game.changeState("moving");
+                    }
+                } else if (game.gameState == "moving") {
+                    game.changeState("locations");
                 }
-            } else if (game.gameState == "moving") {
-                game.changeState("locations");
             }
         }
     }
@@ -52,7 +54,18 @@ public class CommonMethods {
         gameUpdateTimer = new CountDownTimer(5000, 500) {
             @Override
             public void onTick(long millisUntilFinished) {
-
+                if (game.endTime != 0) {
+                    long diff = game.endTime - System.currentTimeMillis();
+                    if (diff > 0) {
+                        Log.d(TAG, "time left: "+diff);
+                    }
+                    else {
+                        game.changeState("ended");
+                    }
+                }
+                else {
+                    Log.d(TAG, "Game end time has not been set!");
+                }
             }
 
             @Override
