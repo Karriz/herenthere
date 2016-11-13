@@ -42,10 +42,14 @@ public class CommonMethods {
         }
     }
 
+    public static void stopGameLoop() {
+        if (gameUpdateTimer != null) gameUpdateTimer.cancel();
+    }
+
     public static void startGameLoop() {
         if (gameUpdateTimer != null) gameUpdateTimer.cancel();
 
-        gameUpdateTimer = new CountDownTimer(2000, 100) {
+        gameUpdateTimer = new CountDownTimer(5000, 500) {
             @Override
             public void onTick(long millisUntilFinished) {
 

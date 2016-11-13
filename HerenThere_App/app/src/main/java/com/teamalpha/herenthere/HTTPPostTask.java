@@ -24,7 +24,8 @@ public class HTTPPostTask {
 
     OkHttpClient client = new OkHttpClient();
 
-    public void post(String url, final CallbackInterface callback) throws IOException {
+    public void post(final String url, final CallbackInterface callback) throws IOException {
+        Log.d(TAG, url);
         RequestBody reqbody = RequestBody.create(null, new byte[0]);
 
         Request request = new Request.Builder()
@@ -49,18 +50,26 @@ public class HTTPPostTask {
                     public void onResponse(Call call, final Response response) throws IOException {
                         if (response.code() == 200) {
                             String res = response.body().string();
-
+                            Log.d(TAG, url);
                             Log.d(TAG, res);
+                            if(!res.equals("")) {
+                                if (res.charAt(0) != '{') {
+                                    res = "{\"response\":" + res + "}";
+                                }
 
-                            if (res.charAt(0) != '{') {
-                                res = "{response:"+res+"}";
+                                try {
+                                    JSONObject obj = new JSONObject(res);
+                                    callback.onResponse(obj);
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
                             }
-
-                            try {
-                                JSONObject obj = new JSONObject(res);
-                                callback.onResponse(obj);
-                            } catch (JSONException e) {
-                                e.printStackTrace();
+                            else {
+                                try {
+                                    callback.onResponse(new JSONObject());
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
                             }
                         }
                         else {
