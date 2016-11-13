@@ -100,6 +100,8 @@ public class GameActivity extends FragmentActivity implements
     private int lastActualLocationId;
     private List<Integer> fakeLocationIds = new ArrayList<Integer>();
 
+    private int fakeLocationAmount = 0;
+
     public boolean moving = false;
     private boolean playerIsVisible = false;
     public String gameState = "locations"; //"locations", "spotting" or "moving"
@@ -673,18 +675,22 @@ public class GameActivity extends FragmentActivity implements
     @Override
     public void onMapClick(LatLng latLng) {
         if (gameState == "locations") {
-            Log.d(TAG, "Map was clicked at position: " + latLng.latitude + " ," + latLng.longitude);
-            addMarker(latLng, playerId, false);
+            if (fakeLocationAmount <= 10) {
+                Log.d(TAG, "Map was clicked at position: " + latLng.latitude + " ," + latLng.longitude);
+                addMarker(latLng, playerId, false);
 
-            List<Location> locations = new ArrayList<Location>();
+                List<Location> locations = new ArrayList<Location>();
 
-            Location location = new Location("");
-            location.setLatitude(latLng.latitude);
-            location.setLongitude(latLng.longitude);
+                Location location = new Location("");
+                location.setLatitude(latLng.latitude);
+                location.setLongitude(latLng.longitude);
 
-            locations.add(location);
+                locations.add(location);
 
-            postLocationsToServer(locations, false);
+                postLocationsToServer(locations, false);
+
+                fakeLocationAmount ++;
+            }
         }
     }
 
@@ -740,7 +746,9 @@ public class GameActivity extends FragmentActivity implements
                     @Override
                     public void run() {
                         gameState = "locations";
+                        generateButton.setEnabled(true);
 
+                        fakeLocationAmount = 0;
                         hideLocations(fakeLocationIds);
                         fakeLocationIds.clear();
 
@@ -769,6 +777,7 @@ public class GameActivity extends FragmentActivity implements
                     @Override
                     public void run() {
                         gameState = "spotting";
+                        generateButton.setEnabled(false);
 
                         if (timer != null) {
                             timer.cancel();
@@ -789,6 +798,8 @@ public class GameActivity extends FragmentActivity implements
                         if (timer != null) {
                             timer.cancel();
                         }
+
+                        generateButton.setEnabled(false);
 
                         playerIsVisible = false;
                         hintText.setText("You can keep moving");
@@ -811,6 +822,7 @@ public class GameActivity extends FragmentActivity implements
 
             case "ended":
                 gameState = "ended";
+                generateButton.setEnabled(false);
                 CommonMethods.stopGameLoop();
                 if (timer != null) {
                     timer.cancel();
@@ -863,5 +875,12 @@ public class GameActivity extends FragmentActivity implements
     protected void onDestroy() {
         CommonMethods.stopGameLoop();
         super.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+
+        // super.onBackPressed(); // Comment this super call to avoid calling finish()
     }
 }
