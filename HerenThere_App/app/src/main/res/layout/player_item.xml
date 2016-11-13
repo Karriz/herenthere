@@ -10,6 +10,6 @@
     android:id="@+id/playerListItem"
     android:layout_width="100dip"
     android:textColor="@android:color/holo_red_light"
-    android:background="@android:color/darker_gray" />
+    android:background="#80000000" />
 
 </LinearLayout>
