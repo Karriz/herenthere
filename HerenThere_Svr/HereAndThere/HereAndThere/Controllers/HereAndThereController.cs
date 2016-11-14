@@ -54,9 +54,11 @@ namespace HereAndThere.Controllers
         ///     ]
         ///     }
         /// </param>
-        /// <returns>list of player locations example:  [
-        ///     {"id":1,"latitude":0.1,"longitude":0.1,"isActual":true,"isVisible":true,"timeStamp":"2016-11-07T23:28:40.406Z","playerId":1,"matchId":1}
-        ///     ]</returns>
+        /// <returns>
+        ///     list of player locations example: { "playerId":1,"matchId":1,"isMoving":true,"locations": [
+        ///     {"id":1,"latitude":0.1,"longitude":0.1,"isActual":true,"isVisible":true,"timeStamp":"2016-11-07T23:28:40.406Z",}
+        ///     ]}
+        /// </returns>
         [
             HttpPost]
         public IHttpActionResult AddPlayerActivity(string activity)
@@ -127,15 +129,18 @@ namespace HereAndThere.Controllers
                                     x.id,
                                     x.latitude,
                                     x.longitude,
-                                  
                                     x.isActual,
                                     x.isVisible,
-                                    x.timeStamp,
-                                    x.movement.playerId,
-                                    x.movement.matchId
+                                    x.timeStamp
                                 }).ToList();
-
-                    return Ok(returnedLocations);
+                    var returnData = new
+                    {
+                        movement.playerId,
+                        movement.matchId,
+                        movement.isMoving,
+                        locations = returnedLocations
+                    };
+                    return Ok(returnData);
                 }
             }
             catch (Exception exception)
@@ -164,6 +169,8 @@ namespace HereAndThere.Controllers
                         location.modifiedBy = "system";
                         location.modifiedTimeStamp = DateTime.Now;
                     }
+
+                    db.SaveChanges();
                 }
 
                 return Ok();
@@ -173,6 +180,44 @@ namespace HereAndThere.Controllers
                 return BadRequest(ExceptionProcessor.Process(exception));
             }
         }
+
+        /// <summary>
+        /// Makes all player locations in a match Invisible
+        /// </summary>
+        /// <param name="playerId"></param>
+        /// <param name="matchId"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public IHttpActionResult MakePlayerLocationsInvisible(int playerId,int matchId)
+        {
+            try
+            {
+                using (var db = new HereAndThereDbContext())
+                {
+                    var match = db.matches.FirstOrDefault(x => x.id == matchId);
+                    if (match == null) return BadRequest(string.Format("No Such match with id: {0}", matchId));
+                    var player = db.players.FirstOrDefault(x => x.id == playerId);
+
+                    if (player == null) return BadRequest(string.Format("No Such Player with id: {0}", matchId));
+                    var locations = db.locations.Where(x => x.movement.playerId==playerId&&x.movement.matchId==matchId).ToList();
+                    foreach (var location in locations)
+                    {
+                        location.isVisible = false;
+                        location.modifiedBy = "system";
+                        location.modifiedTimeStamp = DateTime.Now;
+                    }
+
+                    db.SaveChanges();
+                }
+
+                return Ok();
+            }
+            catch (Exception exception)
+            {
+                return BadRequest(ExceptionProcessor.Process(exception));
+            }
+        }
+
 
         /// <summary>
         ///     Gets all  currently visible Player locations of a Match
@@ -437,6 +482,7 @@ namespace HereAndThere.Controllers
         /// <param name="upperRightLongitude">Upper Right Longitude bound of match venue</param>
         /// <returns>The Match </returns>
         [ResponseType(typeof(Match))]
+        [HttpPost]
         public IHttpActionResult AddMatch(decimal lowerLeftLatitude, decimal lowerLeftLongitude,
             decimal upperRightLatitude, decimal upperRightLongitude, DateTime startTime,
             DateTime endTime)
@@ -451,7 +497,7 @@ namespace HereAndThere.Controllers
                             .OrderByDescending(x => x.startTime)
                             .FirstOrDefault();
                     if (onGoingMatch != null)
-                        return Ok(onGoingMatch);
+                        return GetMatchInfo((int) onGoingMatch.id);
 
                     var match = new Match();
                     var lowerLeft = new Boundary
@@ -509,6 +555,33 @@ namespace HereAndThere.Controllers
                     match.endTime = newEndTime;
                     db.SaveChanges();
                     return Ok("Match End time extended");
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ExceptionProcessor.Process(ex));
+            }
+        }
+
+        
+        /// <summary>
+        /// End a match
+        /// </summary>
+        /// <param name="matchId"></param>
+        /// <returns></returns>
+        public IHttpActionResult EndMatch(int matchId)
+        {
+            try
+            {
+                using (var db = new HereAndThereDbContext())
+                {
+                    var match = db.matches.FirstOrDefault(x => x.id == matchId);
+                    if (match == null) return BadRequest(string.Format("No Such Match with id: {0}", matchId));
+
+                    var endTime = DateTime.Now;
+                    match.endTime = endTime;
+                    db.SaveChanges();
+                    return Ok( string.Format("Match Ended successfully @ {0}",endTime));
                 }
             }
             catch (Exception ex)

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <parameters>
-  <parameter name="DefaultDbConnection-Web.config Connection String" description="DefaultDbConnection Connection String used in web.config by the application to access the database." defaultValue="Data Source=.;Initial Catalog=HereAndThere;User Id=sa;Password=db.pass" tags="SqlConnectionString">
+  <parameter name="DefaultDbConnection-Web.config Connection String" description="DefaultDbConnection Connection String used in web.config by the application to access the database." defaultValue="Data Source=35.156.7.19,1433;Initial Catalog=HereAndThere;User Id=sa;Password=db.pass123" tags="SqlConnectionString">
     <parameterEntry kind="XmlFile" scope="C:\\Users\\opoku\\Source\\Repos\\herenthere\\HerenThere_Svr\\HereAndThere\\HereAndThere\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='DefaultDbConnection']/@connectionString" />
   </parameter>
   <parameter name="DefaultDbConnection_DatabasePublish-Web.config Connection String" description="DefaultDbConnection_DatabasePublish Connection String used in web.config by the application to access the database." defaultValue="DefaultDbConnection_DatabasePublish.ConnetionString" tags="SqlConnectionString">

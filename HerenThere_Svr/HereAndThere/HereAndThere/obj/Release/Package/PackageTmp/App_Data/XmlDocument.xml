@@ -510,15 +510,25 @@
                 ]
                 }
             </param>
-            <returns>list of player locations example:  [
-                {"id":1,"latitude":0.1,"longitude":0.1,"isActual":true,"isVisible":true,"timeStamp":"2016-11-07T23:28:40.406Z","playerId":1,"matchId":1}
-                ]</returns>
+            <returns>
+                list of player locations example: { "playerId":1,"matchId":1,"isMoving":true,"locations": [
+                {"id":1,"latitude":0.1,"longitude":0.1,"isActual":true,"isVisible":true,"timeStamp":"2016-11-07T23:28:40.406Z",}
+                ]}
+            </returns>
         </member>
         <member name="M:HereAndThere.Controllers.HereAndThereController.MakeLocationInvisible(System.String)">
             <summary>
                 Make one or more Locations invisible
             </summary>
             <param name="locationIds">JSON list of location ids eg [1,2,3,4]</param>
+            <returns></returns>
+        </member>
+        <member name="M:HereAndThere.Controllers.HereAndThereController.MakeLocationPlayerInvisible(System.Int32,System.Int32)">
+            <summary>
+            Makes all player locations in a match Invisible
+            </summary>
+            <param name="playerId"></param>
+            <param name="matchId"></param>
             <returns></returns>
         </member>
         <member name="M:HereAndThere.Controllers.HereAndThereController.GetAllPlayerLocations(System.Int32)">
@@ -592,6 +602,13 @@
             </summary>
             <param name="matchId"></param>
             <param name="newEndTime"></param>
+            <returns></returns>
+        </member>
+        <member name="M:HereAndThere.Controllers.HereAndThereController.EndMatch(System.Int32)">
+            <summary>
+            End a match
+            </summary>
+            <param name="matchId"></param>
             <returns></returns>
         </member>
         <member name="M:HereAndThere.Controllers.HereAndThereController.AddPlayeScore(System.Int32,System.Int32,System.Decimal,System.DateTime,System.Int32,System.String)">
