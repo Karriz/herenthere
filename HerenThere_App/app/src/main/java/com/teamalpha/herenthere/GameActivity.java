@@ -31,6 +31,7 @@ import com.google.android.gms.location.ActivityRecognitionApi;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
@@ -126,6 +127,7 @@ public class GameActivity extends FragmentActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        MapsInitializer.initialize(getApplicationContext());
         CommonMethods.game = this;
 
         setContentView(R.layout.activity_game);
@@ -206,6 +208,8 @@ public class GameActivity extends FragmentActivity implements
         changeState("locations");
 
         CommonMethods.startGameLoop();
+
+        hideAllLocations();
     }
 
     private void startSensor() {
@@ -307,6 +311,7 @@ public class GameActivity extends FragmentActivity implements
             public boolean onMarkerClick ( Marker marker )
             {
                 boolean locationFound = false;
+                boolean ownMarker = false;
                 if (gameState == "spotting") {
                     for (int i = 0; i < playerMarkers.size(); i++) {
                         if (marker.equals(playerMarkers.get(i))) {
@@ -318,10 +323,13 @@ public class GameActivity extends FragmentActivity implements
                                     break;
                                 }
                             }
+                            else {
+                                ownMarker = true;
+                            }
                         }
                     }
 
-                    if (!locationFound) {
+                    if (!locationFound && !ownMarker) {
                         CommonMethods.showToastMessage(CommonMethods.game, "That's a fake location.");
                     }
                 }
@@ -448,9 +456,6 @@ public class GameActivity extends FragmentActivity implements
         //moveMap(new LatLng(location.getLatitude(),location.getLongitude()));
 
         if (gameState != "ended") {
-            List<Integer> lastLocation = new ArrayList<Integer>();
-            lastLocation.add(lastActualLocationId);
-            hideLocations(lastLocation);
             playerLocation = location;
             List<Location> locations = new ArrayList<Location>();
             locations.add(location);
@@ -549,6 +554,10 @@ public class GameActivity extends FragmentActivity implements
                     if (result.has("locations")) {
                         JSONArray locations = result.getJSONArray("locations");
                         if (isActual) {
+                            List<Integer> lastLocation = new ArrayList<Integer>();
+                            lastLocation.add(lastActualLocationId);
+                            hideLocations(lastLocation);
+
                             lastActualLocationId = locations.getJSONObject(0).getInt("id");
                         }
                         else {
@@ -792,7 +801,7 @@ public class GameActivity extends FragmentActivity implements
                         generateButton.setEnabled(true);
 
                         fakeLocationAmount = 0;
-                        hideAllLocations();
+                        hideLocations(fakeLocationIds);
                         fakeLocationIds.clear();
 
                         if (timer != null) {
