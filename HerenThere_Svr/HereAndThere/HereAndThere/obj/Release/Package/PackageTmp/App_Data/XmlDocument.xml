@@ -523,7 +523,7 @@
             <param name="locationIds">JSON list of location ids eg [1,2,3,4]</param>
             <returns></returns>
         </member>
-        <member name="M:HereAndThere.Controllers.HereAndThereController.MakeLocationPlayerInvisible(System.Int32,System.Int32)">
+        <member name="M:HereAndThere.Controllers.HereAndThereController.MakePlayerLocationsInvisible(System.Int32,System.Int32)">
             <summary>
             Makes all player locations in a match Invisible
             </summary>

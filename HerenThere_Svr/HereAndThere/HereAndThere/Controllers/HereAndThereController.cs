@@ -511,7 +511,7 @@ namespace HereAndThere.Controllers
                     {
                         name = "upperRight",
                         latitude = upperRightLatitude,
-                        longitude = upperRightLatitude
+                        longitude = upperRightLongitude
                     };
                     upperRight.SetAuditable();
 
