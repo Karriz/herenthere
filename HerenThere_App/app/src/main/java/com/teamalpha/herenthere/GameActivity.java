@@ -103,6 +103,8 @@ public class GameActivity extends FragmentActivity implements
 
     private int fakeLocationAmount = 0;
 
+    private Boolean waitingLocationResponse = false;
+
     public boolean moving = false;
     private boolean playerIsVisible = false;
     public String gameState = "locations"; //"locations", "spotting" or "moving"
@@ -455,11 +457,12 @@ public class GameActivity extends FragmentActivity implements
     public void onLocationChanged(Location location) {
         //moveMap(new LatLng(location.getLatitude(),location.getLongitude()));
 
-        if (gameState != "ended") {
+        if (gameState != "ended" && waitingLocationResponse == false) {
             playerLocation = location;
             List<Location> locations = new ArrayList<Location>();
             locations.add(location);
             postLocationsToServer(locations, true);
+            waitingLocationResponse = true;
         }
     }
 
@@ -508,6 +511,7 @@ public class GameActivity extends FragmentActivity implements
 
     public void postLocationsToServer(List<Location> locationList, final boolean isActual) {
 
+        final int lastId = lastActualLocationId;
         String timeStamp = String.format("%tFT%<tTZ",
                 Calendar.getInstance(TimeZone.getTimeZone("Z")));
 
@@ -555,10 +559,12 @@ public class GameActivity extends FragmentActivity implements
                         JSONArray locations = result.getJSONArray("locations");
                         if (isActual) {
                             List<Integer> lastLocation = new ArrayList<Integer>();
-                            lastLocation.add(lastActualLocationId);
+                            lastLocation.add(lastId);
                             hideLocations(lastLocation);
 
                             lastActualLocationId = locations.getJSONObject(0).getInt("id");
+
+                            waitingLocationResponse = false;
                         }
                         else {
                             for (int i=0;i<locations.length();i++) {
@@ -581,6 +587,9 @@ public class GameActivity extends FragmentActivity implements
                 @Override
                 public void onError() {
                     Log.e(TAG, "Error while posting locations!");
+                    if (isActual) {
+                        waitingLocationResponse = false;
+                    }
                 }
 
             });
@@ -761,7 +770,7 @@ public class GameActivity extends FragmentActivity implements
 
         HTTPPostTask httpPostTask = new HTTPPostTask();
 
-        String url = "http://35.156.7.19/api/HereAndThere/MakeLocationPlayerInvisible?playerId="+playerId+"&matchId="+matchId;
+        String url = "http://35.156.7.19/api/HereAndThere/MakePlayerLocationsInvisible?playerId="+playerId+"&matchId="+matchId;
 
         try {
             httpPostTask.post(url, new CallbackInterface() {
