@@ -22,15 +22,6 @@
         android:id="@+id/scoreList"
         android:layout_below="@+id/progressBar" />
 
-    <Button
-        android:text="Generate locations"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="38dp"
-        android:id="@+id/generateButton" />
-
     <ProgressBar
         style="@style/CustomProgressBarHorizontal"
         android:layout_width="wrap_content"
@@ -57,5 +48,15 @@
         android:layout_alignBottom="@+id/progressBar"
         android:gravity="center"
         android:textColor="@android:color/white" />
+
+    <Button
+        android:onClick="hideButtonClicked"
+        android:text="Hide"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/hideButton"
+        android:layout_marginBottom="33dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>

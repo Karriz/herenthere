@@ -86,7 +86,7 @@ public class GameActivity extends FragmentActivity implements
     private List<Boolean> actualMarkers = new ArrayList<Boolean>();
 
     private ProgressBar progressBar;
-    private Button generateButton;
+    private Button hideButton;
     private ListView scoreList;
     private TextView hintText;
 
@@ -107,7 +107,7 @@ public class GameActivity extends FragmentActivity implements
 
     public boolean moving = false;
     private boolean playerIsVisible = false;
-    public String gameState = "locations"; //"locations", "spotting" or "moving"
+    public String gameState = "locations"; //"locations", "spotting" or "hiding"
 
     private List<String> playerScores = new ArrayList<String>();
     private List<Integer> playerIds = new ArrayList<Integer>();
@@ -195,7 +195,7 @@ public class GameActivity extends FragmentActivity implements
                 .build();
 
         progressBar=(ProgressBar)findViewById(R.id.progressBar);
-        generateButton=(Button)findViewById(R.id.generateButton);
+        hideButton=(Button)findViewById(R.id.hideButton);
         scoreList =(ListView)findViewById(R.id.scoreList);
         hintText = (TextView)findViewById(R.id.hintText);
 
@@ -243,7 +243,7 @@ public class GameActivity extends FragmentActivity implements
 
     @Override
     protected void onStop() {
-        ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(googleApiClient,pendingIntent);
+        //ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(googleApiClient,pendingIntent);
         googleApiClient.disconnect();
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -321,18 +321,14 @@ public class GameActivity extends FragmentActivity implements
                                 if (actualMarkers.get(i) == true) {
                                     CommonMethods.showToastMessage(CommonMethods.game, "Great! You get 10 points!");
                                     postScore(10, markerIds.get(i));
-                                    locationFound = true;
-                                    break;
+                                }
+                                else {
+                                    CommonMethods.showToastMessage(CommonMethods.game, "That's a fake location. You get 1 point.");
+                                    postScore(1, markerIds.get(i));
                                 }
                             }
-                            else {
-                                ownMarker = true;
-                            }
+                            break;
                         }
-                    }
-
-                    if (!locationFound && !ownMarker) {
-                        CommonMethods.showToastMessage(CommonMethods.game, "That's a fake location.");
                     }
                 }
                 return true;
@@ -417,10 +413,10 @@ public class GameActivity extends FragmentActivity implements
         Intent intent = new Intent(this, ActivityRecognitionIntentService.class);
         pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
+        /*ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
                 googleApiClient,
                 0 ,
-                pendingIntent);
+                pendingIntent);*/
 
     }
 
@@ -457,7 +453,7 @@ public class GameActivity extends FragmentActivity implements
     public void onLocationChanged(Location location) {
         //moveMap(new LatLng(location.getLatitude(),location.getLongitude()));
 
-        if (gameState != "ended" && waitingLocationResponse == false) {
+        if (gameState != "ended" && gameState != "hiding" && waitingLocationResponse == false) {
             playerLocation = location;
             List<Location> locations = new ArrayList<Location>();
             locations.add(location);
@@ -610,7 +606,7 @@ public class GameActivity extends FragmentActivity implements
                         @Override
                         public void run() {
                             removeMarkers();
-                            if (obj.has("response")) {
+                            if (obj.has("response") && gameState != "hiding") {
                                 try {
                                     JSONArray locations = obj.getJSONArray("response");
                                     for (int i = 0; i < locations.length(); i++) {
@@ -800,6 +796,15 @@ public class GameActivity extends FragmentActivity implements
         }
     }
 
+    public void hideButtonClicked(View view) {
+        if(gameState != "hiding") {
+            changeState("hiding");
+        }
+        else {
+            changeState("locations");
+        }
+    }
+
     public void changeState(String state) {
         switch (state) {
             case "locations":
@@ -807,7 +812,7 @@ public class GameActivity extends FragmentActivity implements
                     @Override
                     public void run() {
                         gameState = "locations";
-                        generateButton.setEnabled(true);
+                        hideButton.setText("Hide");
 
                         fakeLocationAmount = 0;
                         hideLocations(fakeLocationIds);
@@ -838,48 +843,37 @@ public class GameActivity extends FragmentActivity implements
                     @Override
                     public void run() {
                         gameState = "spotting";
-                        generateButton.setEnabled(false);
 
                         if (timer != null) {
                             timer.cancel();
                         }
 
-                        hintText.setText("Spot other players, or move");
+                        hintText.setText("Spot other players, or go hiding and move");
 
                     }
                 });
 
                 break;
-            case "moving":
+            case "hiding":
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        gameState = "moving";
+                        gameState = "hiding";
 
                         if (timer != null) {
                             timer.cancel();
                         }
 
-                        List<Integer> lastLocation = new ArrayList<Integer>();
-                        lastLocation.add(lastActualLocationId);
-                        hideLocations(lastLocation);
+                        progressBar.setProgress(0);
 
-                        generateButton.setEnabled(false);
+                        removeMarkers();
+
+                        hideAllLocations();
+
+                        hideButton.setText("Stop hiding");
 
                         playerIsVisible = false;
-                        hintText.setText("You can keep moving");
-
-                        timer = new CountDownTimer(30000, 1) {
-                            public void onTick(long millisUntilFinished) {
-                                int progress = 1000* (int)millisUntilFinished / 30000;
-                                progressBar.setProgress(progress);
-                            }
-                            public void onFinish() {
-                                hintText.setText("You are visible! Stop!");
-                                playerIsVisible = true;
-                            }
-                        };
-                        timer.start();
+                        hintText.setText("You are now hidden");
                     }
                 });
 
@@ -887,7 +881,7 @@ public class GameActivity extends FragmentActivity implements
 
             case "ended":
                 gameState = "ended";
-                generateButton.setEnabled(false);
+                hideButton.setEnabled(false);
                 CommonMethods.stopGameLoop();
                 if (timer != null) {
                     timer.cancel();
