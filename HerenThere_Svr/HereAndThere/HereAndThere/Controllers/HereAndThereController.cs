@@ -300,7 +300,7 @@ namespace HereAndThere.Controllers
                     if (match == null) return BadRequest(string.Format("No Such match with id: {0}", matchId));
 
                     var players =
-                        match.players.Select(x => new {x.name, score = x.scores.Sum(t => t.point), x.id}).ToList();
+                        match.players.Select(x => new {x.name, score = x.scores.Where(t=>t.matchId==matchId) .Sum(t => t.point), x.id}).ToList();
                     var boundaries = match.boundaries.Select(x => new {x.name, x.latitude, x.longitude}).ToList();
 
                     var result = new
@@ -360,8 +360,18 @@ namespace HereAndThere.Controllers
 
                     if (match != null)
                     {
-                        var players =
-                            match.players.Select(x => new {x.name, score = x.scores.Sum(t => t.point), x.id}).ToList();
+
+
+                        //var players =
+                        //    db.scores.Where(x => x.matchId == matchId)
+                        //        .GroupBy(x => x.player)
+                        //        .Select(x => new {x.Key.name, score = x.Sum(t => t.point), x.Key.id})
+                        //        .ToList();
+
+                       // var playersWithScore = players.Select(x => x.id).ToList();
+
+
+                        var players =match.players.Select(x => new {x.name, score = x.scores.Where(y=>y.matchId==matchId).Sum(t => t.point), x.id}).ToList();
 
                         return Ok(players);
                     }
