@@ -9,7 +9,7 @@
     android:layout_height="wrap_content"
     android:id="@+id/playerListItem"
     android:layout_width="100dip"
-    android:textColor="@android:color/holo_red_light"
-    android:background="#80000000" />
+    android:textColor="@android:color/white"
+    android:textStyle="bold"/>
 
 </LinearLayout>

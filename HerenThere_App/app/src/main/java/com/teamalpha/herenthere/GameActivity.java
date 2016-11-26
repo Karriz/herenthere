@@ -570,10 +570,10 @@ public class GameActivity extends FragmentActivity implements
             httpPostTask.post(url+request.toString(), new CallbackInterface() {
                 @Override
                 public void onResponse(JSONObject result) throws JSONException {
-                    waitingLocationResponse = false;
                     if (result.has("locations")) {
                         JSONArray locations = result.getJSONArray("locations");
                         if (isActual) {
+                            waitingLocationResponse = false;
                             List<Integer> lastLocation = new ArrayList<Integer>();
                             lastLocation.add(lastId);
                             hideLocations(lastLocation);
@@ -602,9 +602,12 @@ public class GameActivity extends FragmentActivity implements
                 @Override
                 public void onError() {
                     Log.e(TAG, "Error while posting locations!");
-                    waitingLocationResponse = false;
                     if (isActual) {
                         waitingLocationResponse = false;
+
+                        List<Integer> lastLocation = new ArrayList<Integer>();
+                        lastLocation.add(lastId);
+                        hideLocations(lastLocation);
                     }
                 }
 
@@ -717,7 +720,7 @@ public class GameActivity extends FragmentActivity implements
         }
     }
 
-    public void hideLocations(List<Integer> locations) {
+    public void hideLocations(final List<Integer> locations) {
         String timeStamp = String.format("%tFT%<tTZ",
                 Calendar.getInstance(TimeZone.getTimeZone("Z")));
 
@@ -753,6 +756,7 @@ public class GameActivity extends FragmentActivity implements
 
                 @Override
                 public void onError() {
+                    hideLocations(locations);
                     Log.e(TAG, "Error while hiding locations!");
                 }
 
