@@ -70,7 +70,9 @@ public class CommonMethods {
 
             @Override
             public void onFinish() {
-                game.updateMarkers();
+                if (game.gameState != "hiding") {
+                    game.updateMarkers();
+                }
                 game.updateScores();
                 startGameLoop();
             }

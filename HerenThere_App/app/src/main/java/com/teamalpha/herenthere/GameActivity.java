@@ -1,5 +1,6 @@
 package com.teamalpha.herenthere;
 
+import android.Manifest;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -26,8 +27,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 
 import android.location.LocationListener;
 
-import com.google.android.gms.location.ActivityRecognition;
-import com.google.android.gms.location.ActivityRecognitionApi;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -40,6 +40,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
 import android.os.CountDownTimer;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -59,10 +60,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 public class GameActivity extends FragmentActivity implements
+        com.google.android.gms.location.LocationListener,
         OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
@@ -70,8 +74,7 @@ public class GameActivity extends FragmentActivity implements
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMapClickListener,
         View.OnClickListener,
-        LocationListener,
-        SensorEventListener{
+        SensorEventListener {
 
     private static final String TAG = "GameActivity";
 
@@ -80,13 +83,18 @@ public class GameActivity extends FragmentActivity implements
     private LocationManager locationManager;
     private PendingIntent pendingIntent;
 
+    private LocationRequest mLocationRequest;
+
     private Location playerLocation;
-    private List<Marker> playerMarkers = new ArrayList<Marker>();;
+    private List<Marker> playerMarkers = new ArrayList<Marker>();
+    ;
     private List<Integer> markerIds = new ArrayList<Integer>();
     private List<Boolean> actualMarkers = new ArrayList<Boolean>();
 
+    private Map<Integer, LatLng> actualLocations = new HashMap<Integer, LatLng>();
+
     private ProgressBar progressBar;
-    private Button generateButton;
+    private Button hideButton;
     private ListView scoreList;
     private TextView hintText;
 
@@ -102,16 +110,19 @@ public class GameActivity extends FragmentActivity implements
     private List<Integer> fakeLocationIds = new ArrayList<Integer>();
 
     private int fakeLocationAmount = 0;
+    private int maxFakeLocations = 20;
+
+    private float radius = 40f;
 
     private Boolean waitingLocationResponse = false;
 
     public boolean moving = false;
     private boolean playerIsVisible = false;
-    public String gameState = "locations"; //"locations", "spotting" or "moving"
+    public String gameState = "locations"; //"locations", "spotting" or "hiding"
 
     private List<String> playerScores = new ArrayList<String>();
     private List<Integer> playerIds = new ArrayList<Integer>();
-    private ArrayAdapter<String> arrayAdapter;
+    private MyAdapter arrayAdapter;
 
 
     private SensorManager mSensorManager;
@@ -149,7 +160,7 @@ public class GameActivity extends FragmentActivity implements
         Intent intent = getIntent();
         String matchStr = intent.getStringExtra("MatchStr");
         playerName = intent.getStringExtra("PlayerName");
-        playerId = intent.getIntExtra("PlayerId",-1);
+        playerId = intent.getIntExtra("PlayerId", -1);
 
         try {
             matchData = new JSONObject(matchStr);
@@ -165,15 +176,15 @@ public class GameActivity extends FragmentActivity implements
             try {
                 Date date = dateFormat.parse(endTimeStr);
                 endTime = date.getTime();
-            } catch ( ParseException e) {
+            } catch (ParseException e) {
                 e.printStackTrace();
             }
 
             playerIds.clear();
             playerScores = new ArrayList<String>();
-            for (int i=0;i<players.length();i++) {
+            for (int i = 0; i < players.length(); i++) {
                 JSONObject player = players.getJSONObject(i);
-                playerScores.add(player.getString("name")+": "+player.getInt("score"));
+                playerScores.add(player.getString("name") + ": " + player.getInt("score"));
                 playerIds.add(player.getInt("id"));
             }
 
@@ -191,19 +202,18 @@ public class GameActivity extends FragmentActivity implements
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
-                .addApi(ActivityRecognition.API)
                 .build();
 
-        progressBar=(ProgressBar)findViewById(R.id.progressBar);
-        generateButton=(Button)findViewById(R.id.generateButton);
-        scoreList =(ListView)findViewById(R.id.scoreList);
-        hintText = (TextView)findViewById(R.id.hintText);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        hideButton = (Button) findViewById(R.id.hideButton);
+        scoreList = (ListView) findViewById(R.id.scoreList);
+        hintText = (TextView) findViewById(R.id.hintText);
 
-        arrayAdapter = new ArrayAdapter<String>(
+        arrayAdapter = new MyAdapter(
                 this,
                 R.layout.player_item,
                 R.id.playerListItem,
-                playerScores );
+                playerScores);
 
         scoreList.setAdapter(arrayAdapter);
 
@@ -226,36 +236,13 @@ public class GameActivity extends FragmentActivity implements
     protected void onStart() {
         googleApiClient.connect();
 
-        if (Build.VERSION.SDK_INT >= 23 &&
-                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            Log.e(TAG, "No location permission");
-        } else {
-            // Acquire a reference to the system Location Manager
-            locationManager = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
-
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, this);
-        }
-
         super.onStart();
     }
 
     @Override
     protected void onStop() {
-        ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(googleApiClient,pendingIntent);
         googleApiClient.disconnect();
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        locationManager.removeUpdates(this);
+
         super.onStop();
     }
 
@@ -295,7 +282,7 @@ public class GameActivity extends FragmentActivity implements
             JSONObject lowerLeft = boundaries.getJSONObject(0);
             JSONObject upperRight = boundaries.getJSONObject(1);
 
-            mMap.setLatLngBoundsForCameraTarget(new LatLngBounds(new LatLng(lowerLeft.getDouble("latitude"), lowerLeft.getDouble("longitude")),new LatLng(upperRight.getDouble("latitude"), upperRight.getDouble("longitude"))));
+            mMap.setLatLngBoundsForCameraTarget(new LatLngBounds(new LatLng(lowerLeft.getDouble("latitude"), lowerLeft.getDouble("longitude")), new LatLng(upperRight.getDouble("latitude"), upperRight.getDouble("longitude"))));
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -307,39 +294,51 @@ public class GameActivity extends FragmentActivity implements
         uiSettings.setRotateGesturesEnabled(false);
         uiSettings.setCompassEnabled(false);
 
-        mMap.setOnMarkerClickListener( new GoogleMap.OnMarkerClickListener()
-        {
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
-            public boolean onMarkerClick ( Marker marker )
-            {
-                boolean locationFound = false;
-                boolean ownMarker = false;
+            public boolean onMarkerClick(Marker marker) {
+
                 if (gameState == "spotting") {
                     for (int i = 0; i < playerMarkers.size(); i++) {
                         if (marker.equals(playerMarkers.get(i))) {
                             if (markerIds.get(i) != playerId) {
+
+                                float distance = 99999f;
+                                LatLng actualLatLng = actualLocations.get(markerIds.get(i));
+                                if (actualLatLng != null) {
+                                    float[] results = new float[1];
+                                    Location.distanceBetween(actualLatLng.latitude, actualLatLng.longitude, playerLocation.getLatitude(), playerLocation.getLongitude(), results);
+                                    distance = results[0];
+                                }
+
                                 if (actualMarkers.get(i) == true) {
-                                    CommonMethods.showToastMessage(CommonMethods.game, "Great! You get 10 points!");
-                                    postScore(10, markerIds.get(i));
-                                    locationFound = true;
-                                    break;
+
+                                    if (distance <= radius) {
+                                        CommonMethods.showToastMessage(CommonMethods.game, "The player is close! You get 20 points!");
+                                        postScore(20, markerIds.get(i));
+                                    } else {
+                                        CommonMethods.showToastMessage(CommonMethods.game, "Great! You get 10 points!");
+                                        postScore(10, markerIds.get(i));
+                                    }
+                                } else {
+                                    if (distance <= radius) {
+                                        CommonMethods.showToastMessage(CommonMethods.game, "That's a fake location, but the player is close! You get 5 points.");
+                                        postScore(5, markerIds.get(i));
+                                    } else {
+                                        CommonMethods.showToastMessage(CommonMethods.game, "That's a fake location. You get 1 point.");
+                                        postScore(1, markerIds.get(i));
+                                    }
                                 }
                             }
-                            else {
-                                ownMarker = true;
-                            }
+                            break;
                         }
-                    }
-
-                    if (!locationFound && !ownMarker) {
-                        CommonMethods.showToastMessage(CommonMethods.game, "That's a fake location.");
                     }
                 }
                 return true;
             }
         });
 
-        moveMap(new LatLng(65.016667,25.466667));
+        moveMap(new LatLng(65.016667, 25.466667));
 
     }
 
@@ -350,7 +349,7 @@ public class GameActivity extends FragmentActivity implements
             double latitude = latlng.latitude;
             double longitude = latlng.longitude;
 
-            Log.d(TAG, "Moving map to: "+latitude + " ," + longitude);
+            Log.d(TAG, "Moving map to: " + latitude + " ," + longitude);
 
             //Moving the camera
             mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
@@ -371,6 +370,10 @@ public class GameActivity extends FragmentActivity implements
         markerIds.add(id);
         actualMarkers.add(isActual);
 
+        if (isActual) {
+            actualLocations.put(id, latlng);
+        }
+
         return newMarker;
     }
 
@@ -385,7 +388,7 @@ public class GameActivity extends FragmentActivity implements
         colors.add(BitmapDescriptorFactory.HUE_CYAN);
         colors.add(BitmapDescriptorFactory.HUE_YELLOW);
 
-        for (int i=0; i<playerIds.size(); i++) {
+        for (int i = 0; i < playerIds.size(); i++) {
             if (playerIds.get(i) == id) {
                 if (colors.size() > i) {
                     return colors.get(i);
@@ -397,13 +400,17 @@ public class GameActivity extends FragmentActivity implements
 
     //Function to remove all playerMarkers
     private void removeMarkers() {
-        for (int i=0;i<playerMarkers.size();i++) {
+        for (int i = 0; i < playerMarkers.size(); i++) {
             Marker marker = playerMarkers.get(i);
             marker.remove();
         }
+
         playerMarkers.clear();
         markerIds.clear();
         actualMarkers.clear();
+
+        actualLocations.clear();
+
     }
 
     @Override
@@ -413,14 +420,23 @@ public class GameActivity extends FragmentActivity implements
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        Log.d(TAG,"onConnected called");
-        Intent intent = new Intent(this, ActivityRecognitionIntentService.class);
-        pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Log.d(TAG, "onConnected called");
 
-        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
-                googleApiClient,
-                0 ,
-                pendingIntent);
+        mLocationRequest = LocationRequest.create();
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setInterval(10000);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, mLocationRequest, this);
 
     }
 
@@ -456,7 +472,7 @@ public class GameActivity extends FragmentActivity implements
 
     public void onLocationChanged(Location location) {
         //moveMap(new LatLng(location.getLatitude(),location.getLongitude()));
-
+        Log.d(TAG, "Location changed!");
         if (gameState != "ended" && waitingLocationResponse == false) {
             playerLocation = location;
             List<Location> locations = new ArrayList<Location>();
@@ -554,17 +570,16 @@ public class GameActivity extends FragmentActivity implements
             httpPostTask.post(url+request.toString(), new CallbackInterface() {
                 @Override
                 public void onResponse(JSONObject result) throws JSONException {
-
                     if (result.has("locations")) {
                         JSONArray locations = result.getJSONArray("locations");
                         if (isActual) {
+                            waitingLocationResponse = false;
                             List<Integer> lastLocation = new ArrayList<Integer>();
                             lastLocation.add(lastId);
                             hideLocations(lastLocation);
 
                             lastActualLocationId = locations.getJSONObject(0).getInt("id");
 
-                            waitingLocationResponse = false;
                         }
                         else {
                             for (int i=0;i<locations.length();i++) {
@@ -589,6 +604,10 @@ public class GameActivity extends FragmentActivity implements
                     Log.e(TAG, "Error while posting locations!");
                     if (isActual) {
                         waitingLocationResponse = false;
+
+                        List<Integer> lastLocation = new ArrayList<Integer>();
+                        lastLocation.add(lastId);
+                        hideLocations(lastLocation);
                     }
                 }
 
@@ -610,7 +629,7 @@ public class GameActivity extends FragmentActivity implements
                         @Override
                         public void run() {
                             removeMarkers();
-                            if (obj.has("response")) {
+                            if (obj.has("response") && gameState != "hiding") {
                                 try {
                                     JSONArray locations = obj.getJSONArray("response");
                                     for (int i = 0; i < locations.length(); i++) {
@@ -680,24 +699,9 @@ public class GameActivity extends FragmentActivity implements
     }
 
     @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
-    }
-
-    @Override
     public void onMapClick(LatLng latLng) {
         if (gameState == "locations") {
-            if (fakeLocationAmount <= 10) {
+            if (fakeLocationAmount < maxFakeLocations) {
                 Log.d(TAG, "Map was clicked at position: " + latLng.latitude + " ," + latLng.longitude);
                 addMarker(latLng, playerId, false);
 
@@ -716,7 +720,7 @@ public class GameActivity extends FragmentActivity implements
         }
     }
 
-    public void hideLocations(List<Integer> locations) {
+    public void hideLocations(final List<Integer> locations) {
         String timeStamp = String.format("%tFT%<tTZ",
                 Calendar.getInstance(TimeZone.getTimeZone("Z")));
 
@@ -752,6 +756,7 @@ public class GameActivity extends FragmentActivity implements
 
                 @Override
                 public void onError() {
+                    hideLocations(locations);
                     Log.e(TAG, "Error while hiding locations!");
                 }
 
@@ -800,6 +805,15 @@ public class GameActivity extends FragmentActivity implements
         }
     }
 
+    public void hideButtonClicked(View view) {
+        if(gameState != "hiding") {
+            changeState("hiding");
+        }
+        else {
+            changeState("locations");
+        }
+    }
+
     public void changeState(String state) {
         switch (state) {
             case "locations":
@@ -807,7 +821,7 @@ public class GameActivity extends FragmentActivity implements
                     @Override
                     public void run() {
                         gameState = "locations";
-                        generateButton.setEnabled(true);
+                        hideButton.setText("Hide");
 
                         fakeLocationAmount = 0;
                         hideLocations(fakeLocationIds);
@@ -838,48 +852,38 @@ public class GameActivity extends FragmentActivity implements
                     @Override
                     public void run() {
                         gameState = "spotting";
-                        generateButton.setEnabled(false);
 
                         if (timer != null) {
                             timer.cancel();
                         }
 
-                        hintText.setText("Spot other players, or move");
+                        hintText.setText("Spot other players, or go hiding and move");
 
                     }
                 });
 
                 break;
-            case "moving":
+            case "hiding":
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        gameState = "moving";
+                        gameState = "hiding";
 
                         if (timer != null) {
                             timer.cancel();
                         }
 
-                        List<Integer> lastLocation = new ArrayList<Integer>();
-                        lastLocation.add(lastActualLocationId);
-                        hideLocations(lastLocation);
+                        progressBar.setProgress(0);
 
-                        generateButton.setEnabled(false);
+                        removeMarkers();
+
+                        hideAllLocations();
+
+                        hideButton.setText("Stop hiding");
 
                         playerIsVisible = false;
-                        hintText.setText("You can keep moving");
-
-                        timer = new CountDownTimer(30000, 1) {
-                            public void onTick(long millisUntilFinished) {
-                                int progress = 1000* (int)millisUntilFinished / 30000;
-                                progressBar.setProgress(progress);
-                            }
-                            public void onFinish() {
-                                hintText.setText("You are visible! Stop!");
-                                playerIsVisible = true;
-                            }
-                        };
-                        timer.start();
+                        moving = true;
+                        hintText.setText("You are now hidden");
                     }
                 });
 
@@ -887,7 +891,7 @@ public class GameActivity extends FragmentActivity implements
 
             case "ended":
                 gameState = "ended";
-                generateButton.setEnabled(false);
+                hideButton.setEnabled(false);
                 CommonMethods.stopGameLoop();
                 if (timer != null) {
                     timer.cancel();
@@ -939,6 +943,7 @@ public class GameActivity extends FragmentActivity implements
     @Override
     protected void onDestroy() {
         CommonMethods.stopGameLoop();
+        googleApiClient.disconnect();
         super.onDestroy();
     }
 
