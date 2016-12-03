@@ -167,6 +167,7 @@
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Controllers\HereAndThereController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\MatchesController.cs" />
     <Compile Include="Migrations\201611031805061_ModelRefactoring.cs" />
     <Compile Include="Migrations\201611031805061_ModelRefactoring.Designer.cs">
       <DependentUpon>201611031805061_ModelRefactoring.cs</DependentUpon>
@@ -214,6 +215,11 @@
     <Compile Include="Models\Entities.cs" />
     <Compile Include="Models\HereAndThereDbContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Content Include="Views\Matches\Create.cshtml" />
+    <Content Include="Views\Matches\Delete.cshtml" />
+    <Content Include="Views\Matches\Details.cshtml" />
+    <Content Include="Views\Matches\Edit.cshtml" />
+    <Content Include="Views\Matches\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Data\XmlDocument.xml" />
